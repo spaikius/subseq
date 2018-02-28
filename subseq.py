@@ -20,18 +20,31 @@ def subseq(target):
 
 	# Susikonstruojam vientisa aa grandine (panasiai kaip fasta)
 	aaComplete = ''
-	for aa in aaPosList['aa']: aaComplete += aa[0]
+	for aa in aaPosList['aa']: aaComplete += str(aa[0])
 
 	# RegEx validavimas
 	try:
 		_target = re.compile(target, re.I)		
 	except Exception as e:
-		print "Error: for target(RegEx):", target, "- syntax error."
+		print "Error: for target(RegEx):" + target + "- syntax error."
 		return
 
 	matchObj = _target.search(aaComplete)
+
+	# Tuscias select'as, kuri papildysim.
+	selectName = 'subseq'
+	cmd.select(selectName, 'none')
+
 	while matchObj:
-		print matchObj.start(), matchObj.end()
+		start = str(aaPosList['aa'][matchObj.start()][1])
+		end = str(aaPosList['aa'][matchObj.end() - 1][1])
+
+		chainStart = str(aaPosList['aa'][matchObj.start()][2])
+		chainEnd = str(aaPosList['aa'][matchObj.end() - 1][2])
+
+		if chainStart == chainEnd:
+			cmd.select(selectName, selectName +  " | ( i. " + start + "-" + end + " & c. " + chainStart + ")")
+		
 		matchObj = _target.search(aaComplete, matchObj.start() + 1)
 	
 
