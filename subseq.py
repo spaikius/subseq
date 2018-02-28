@@ -1,4 +1,5 @@
 from pymol import cmd
+import re
 
 cmd.set("seq_view", 1)
 
@@ -9,15 +10,32 @@ oneLetter = {
 	'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'
 }
 
-def subseq():
-	# Gaunam bendros sekos aa, pozicija, grandine
-	aaList = {'aa': []}
-	cmd.iterate("name ca", "aa.append([resn, resi, chain])", space=aaList)
+def subseq(target):
+	# Gaunam bendros sekos aa pozicijas, pacias aa, grandine
+	aaPosList = {'aa': []}
+	cmd.iterate("name ca", "aa.append([resn, resi, chain])", space=aaPosList)
 
 	# Mums reikia vienraidzio aa kodo, o pymol grazina triraidi koda
-	for aa in aaList['aa']: aa[0] = oneLetter[aa[0]]
+	for aa in aaPosList['aa']: aa[0] = oneLetter[aa[0]]
 
-	print aaList
+	# Susikonstruojam vientisa aa grandine (panasiai kaip fasta)
+	aaComplete = ''
+	for aa in aaPosList['aa']: aaComplete += aa[0]
+
+	# RegEx validavimas
+	try:
+		_target = re.compile(target, re.I)		
+	except Exception as e:
+		print "Error: for target(RegEx):", target, "- syntax error."
+		return
+
+	matchObj = _target.search(aaComplete)
+	while matchObj:
+		print matchObj.start(), matchObj.end()
+		matchObj = _target.search(aaComplete, matchObj.start() + 1)
+	
+
+	
 	
 	
 
