@@ -16,7 +16,7 @@ def subseq(target):
 	try:
 		_target = re.compile(target, re.I)		
 	except Exception as e:
-		print "Error: for target(RegEx):" + target + "- syntax error."
+		print "Error: for target(RegEx): " + target + " - syntax error."
 		return
 
 	# Gaunam bendros sekos aa pozicijas, pacia aa, grandine
@@ -31,10 +31,13 @@ def subseq(target):
 	for aa in aaPosList['aa']: aaComplete += str(aa[0])
 
 	matchObj = _target.search(aaComplete)
-
-	# Tuscias select'as, kuri papildysim.
-	selectName = 'subseq'
-	cmd.select(selectName, 'none')
+	if matchObj:
+		# Tuscias select'as, kuri papildysim.
+		selectName = 'subseq'
+		cmd.select(selectName, 'none')
+	else:
+		print "No match found for given target: " + target
+		return
 
 	# Iteruojam, kol nebus rastas match'as
 	while matchObj:
@@ -54,10 +57,6 @@ def subseq(target):
 		# pradedam nuo paskutinios rastos kooridnates
 		# klausimas: ar leidziam match'ams overlap'int?
 		matchObj = _target.search(aaComplete, matchObj.start() + 1)
-	
-
-	
-	
 	
 
 cmd.extend('subseq', subseq)
