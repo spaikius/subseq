@@ -11,7 +11,15 @@ oneLetter = {
 }
 
 def subseq(target):
-	# Gaunam bendros sekos aa pozicijas, pacias aa, grandine
+
+	# RegEx validavimas
+	try:
+		_target = re.compile(target, re.I)		
+	except Exception as e:
+		print "Error: for target(RegEx):" + target + "- syntax error."
+		return
+
+	# Gaunam bendros sekos aa pozicijas, pacia aa, grandine
 	aaPosList = {'aa': []}
 	cmd.iterate("name ca", "aa.append([resn, resi, chain])", space=aaPosList)
 
@@ -22,29 +30,29 @@ def subseq(target):
 	aaComplete = ''
 	for aa in aaPosList['aa']: aaComplete += str(aa[0])
 
-	# RegEx validavimas
-	try:
-		_target = re.compile(target, re.I)		
-	except Exception as e:
-		print "Error: for target(RegEx):" + target + "- syntax error."
-		return
-
 	matchObj = _target.search(aaComplete)
 
 	# Tuscias select'as, kuri papildysim.
 	selectName = 'subseq'
 	cmd.select(selectName, 'none')
 
+	# Iteruojam, kol nebus rastas match'as
 	while matchObj:
+		# Match'o pradzios ir pagaibos koordinates
 		start = str(aaPosList['aa'][matchObj.start()][1])
 		end = str(aaPosList['aa'][matchObj.end() - 1][1])
 
+		# kokiai grandiniai priklauso match'o prima ir paskutine aa
 		chainStart = str(aaPosList['aa'][matchObj.start()][2])
 		chainEnd = str(aaPosList['aa'][matchObj.end() - 1][2])
 
 		if chainStart == chainEnd:
+			# Papildom select'a, o ne isnaujo perasom...
 			cmd.select(selectName, selectName +  " | ( i. " + start + "-" + end + " & c. " + chainStart + ")")
 		
+		# kadangi re.search iesko tik pacio pirmo match'o, tai tesiant
+		# pradedam nuo paskutinios rastos kooridnates
+		# klausimas: ar leidziam match'ams overlap'int?
 		matchObj = _target.search(aaComplete, matchObj.start() + 1)
 	
 
