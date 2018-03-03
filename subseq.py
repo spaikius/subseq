@@ -10,6 +10,7 @@ oneLetter = {
 	'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'
 }
 
+
 def subseq(target):
 
 	# RegEx validavimas
