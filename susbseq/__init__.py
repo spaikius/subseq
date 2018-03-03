@@ -3,7 +3,7 @@ import re
 import os
 import sys
 
-cmd.set("seq_view", 1)
+# cmd.set("seq_view", 1)
 
 oneLetter = {
 	'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
@@ -12,15 +12,17 @@ oneLetter = {
 	'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'
 }
 
+
 def __init__(self):
 	initAll()
+
 
 def initAll():
 	path = os.path.dirname(__file__) + '/lib'
 	sys.path.append(path)
-	print sys.path
-
-
+	from subseq_re import paas
+	paas('asd')
+	
 
 def subseq(target):
 
@@ -72,4 +74,3 @@ def subseq(target):
 	
 
 cmd.extend('subseq', subseq)
-
