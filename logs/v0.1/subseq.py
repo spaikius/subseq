@@ -60,3 +60,4 @@ def subseq(target):
 	
 
 cmd.extend('subseq', subseq)
+
