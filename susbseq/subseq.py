@@ -1,36 +1,19 @@
 from pymol import cmd
 import re
-import os
-import sys
 
 # cmd.set("seq_view", 1)
 
-oneLetter = {
-	'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-	'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
-	'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
-	'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'
-}
-
-
-def __init__(self):
-	initAll()
-
-
-def initAll():
-	path = os.path.dirname(__file__) + '/lib'
-	sys.path.append(path)
-	from subseq_re import paas
-	paas('asd')
+def subseq(**kwargs):
 	
 
-def subseq(target):
+
+def subseq_re(_target):
 
 	# RegEx validavimas
 	try:
-		_target = re.compile(target, re.I)		
+		target = re.compile(_target, re.I)		
 	except Exception as e:
-		print "Error: for target(RegEx): " + target + " - syntax error."
+		print "Error: for target(RegEx): " + _target + " - syntax error."
 		return
 
 	# Gaunam bendros sekos aa pozicijas, pacia aa, grandine
@@ -50,7 +33,7 @@ def subseq(target):
 		selectName = 'subseq'
 		cmd.select(selectName, 'none')
 	else:
-		print "No match found for given target: " + target
+		print "No match found for given target: " + _target
 		return
 
 	# Iteruojam, kol nebus rastas match'as
@@ -70,7 +53,15 @@ def subseq(target):
 		# kadangi re.search iesko tik pacio pirmo match'o, tai tesiant
 		# pradedam nuo paskutinios rastos kooridnates
 		# klausimas: ar leidziam match'ams overlap'int?
-		matchObj = _target.search(aaComplete, matchObj.start() + 1)
+		matchObj = target.search(aaComplete, matchObj.start() + 1)
 	
 
 cmd.extend('subseq', subseq)
+
+oneLetter = {
+	'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+	'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
+	'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
+	'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'
+}
+
