@@ -11,6 +11,7 @@ params = {
 	'type'  : type_vals[0],
 	'target': None,
 	'chains': 'all',
+	'model' : None,
 }
 
 aaList = {'aa': []}
@@ -41,14 +42,22 @@ def validate_args(_kwargs):
 		if key in params:
 			if key == 'type' and value in type_vals:
 				params[key] = value
+
 			elif key == 'target':
 				params[key] = value
+
 			elif key == 'chains':
 				if value == 'all':
-					params[key] = 'all'
+					for name in cmd.get_names():
+						for chain_name in cmd.get_chains(name):
+							params[key].append(chain_name)
 				else:
 					_list = literal_eval(re.sub('([A-Za-z])', r'"\1"', value))
 					params[key] = [ i.upper() for i in _list ]
+
+				# Remove dublicates
+				params[key] = list(set(params[key]))
+
 			else:
 				raise Exception('Unknown value in ' + key + ' : ' + value)
 		else:
@@ -77,6 +86,7 @@ def subseq_re():
 		re_target = re.compile(_target, re.I)
 	except:
 		raise Exception('Bad target(RegExp): ' + str(_target))
+
 
 
 	# matchObj = _target.search(aaComplete)
@@ -131,6 +141,7 @@ subseq_help = '''
 @@ Please note: arguments must be sepereted with comma (,) 
 @params:
 (required) target=(str)   : target sequence
-(optional) type=(start)   : re or gl default re
+(optional) model=[array]  : default all
+(optional) type=(str)     : re or gl default re
 (optional) chains=[array] : default all
 '''
