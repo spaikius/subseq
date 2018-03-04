@@ -1,10 +1,66 @@
 from pymol import cmd
+from ast import literal_eval
+
 import re
 
-# cmd.set("seq_view", 1)
+cmd.set("seq_view", 1)
 
-def subseq(**kwargs):
+type_vals = ['re', 'gl']
+
+params = {
+	'type'  : type_vals[0],
+	'target': None,
+	'chains': None,
+}
+
+aaList = {'aa': []}
+complete_chains = dict()
+
+def subseq(**_kwargs):
+	_kwargs.pop('_self', None)
+
+	if bool(_kwargs):
+		try:
+			validate_args(_kwargs)
+			init_data()
+		except Exception as e:
+			print('Error: ' + str(e))
+			# print e
+			return
+
+# Function validates and sets parameters
+def validate_args(_kwargs):
+	for key, value in _kwargs.iteritems():
+		# change to lower case
+		(key, value) = (key.lower(), value.lower())
+
+		if key in params:
+			if key == 'type' and value in type_vals:
+				params[key] = value
+			elif key == 'target':
+				params[key] = value
+			elif key == 'chains':
+				_list = literal_eval(re.sub('([A-Za-z])', r'"\1"', value))
+				params[key] = [ i.upper() for i in _list ]
+			else:
+				raise Exception('Unknown value in ' + key + ' : ' + value)
+		else:
+			raise Exception('Unknown parameter: ' + key)
+
+def init_data():
+	cmd.iterate("name ca", "aa.append([resn, resi, chain, model])", space=aaList)
 	
+	# for aa in aaList['aa']: aa[0] = oneLetter[aa[0]]
+
+	for name in cmd.get_names():
+		complete_chains[name] = {}
+		for chain_name in cmd.get_chains(name):
+			complete_chains[name][chain_name] = ''
+
+	for i in aaList['aa']:
+		complete_chains[i[3]][i[2]] += str(i[0])
+
+	print complete_chains
 
 
 def subseq_re(_target):
@@ -16,16 +72,6 @@ def subseq_re(_target):
 		print "Error: for target(RegEx): " + _target + " - syntax error."
 		return
 
-	# Gaunam bendros sekos aa pozicijas, pacia aa, grandine
-	aaPosList = {'aa': []}
-	cmd.iterate("name ca", "aa.append([resn, resi, chain])", space=aaPosList)
-
-	# Mums reikia vienraidzio aa kodo, o pymol grazina triraidi koda
-	for aa in aaPosList['aa']: aa[0] = oneLetter[aa[0]]
-
-	# Susikonstruojam vientisa aa grandine (panasiai kaip fasta)
-	aaComplete = ''
-	for aa in aaPosList['aa']: aaComplete += str(aa[0])
 
 	matchObj = _target.search(aaComplete)
 	if matchObj:
@@ -39,12 +85,12 @@ def subseq_re(_target):
 	# Iteruojam, kol nebus rastas match'as
 	while matchObj:
 		# Match'o pradzios ir pagaibos koordinates
-		start = str(aaPosList['aa'][matchObj.start()][1])
-		end = str(aaPosList['aa'][matchObj.end() - 1][1])
+		start = str(aaList['aa'][matchObj.start()][1])
+		end = str(aaList['aa'][matchObj.end() - 1][1])
 
 		# kokiai grandiniai priklauso match'o prima ir paskutine aa
-		chainStart = str(aaPosList['aa'][matchObj.start()][2])
-		chainEnd = str(aaPosList['aa'][matchObj.end() - 1][2])
+		chainStart = str(aaList['aa'][matchObj.start()][2])
+		chainEnd = str(aaList['aa'][matchObj.end() - 1][2])
 
 		if chainStart == chainEnd:
 			# Papildom select'a, o ne isnaujo perasom...
