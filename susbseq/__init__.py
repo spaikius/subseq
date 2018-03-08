@@ -5,7 +5,7 @@ import re
 
 cmd.set("seq_view", 1)
 
-type_vals = ['re', 'gl']
+type_vals = ['re', 'lo']
 
 params = {
 	'type'  : type_vals[0],
@@ -142,6 +142,6 @@ subseq_help = '''
 @params:
 (required) target=(str)   : target sequence
 (optional) model=[array]  : default all
-(optional) type=(str)     : re or gl default re
+(optional) type=(str)     : re or lo default re
 (optional) chains=[array] : default all
 '''
