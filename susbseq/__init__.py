@@ -4,42 +4,33 @@ import os
 import sys
 import re
 
-path = os.path.dirname(__file__)
-sys.path.append(path)
+def __init__(self):
+    path = os.path.dirname(__file__)
+    sys.path.append(path)
 
-import ss_ARG
-
-aaList = {'aa': []}
-complete_chains = dict()
+    import ss_ARG
+    import ss_DATA
 
 
-def subseq(*argv, **_kwargs):
+def subseq(*_argv, **_kwargs):
     try:
         ss_ARG.set_parameters(_kwargs)
-        print(ss_ARG.get_parameters())
+        param = ss_ARG.get_parameters()
+        data = ss_DATA.get_data(param['models'], param['chains'])
+        print(data)
     except Exception as e:
         print('Error: ' + str(e))
 
     ss_ARG.reset_parameters()
+    ss_DATA.del_data()
 
 
-def init_data():
-    cmd.iterate("name ca", "aa.append([resn, resi, chain, model])", space=aaList)
-
-    for aa in aaList['aa']:
-        aa[0] = oneLetter[aa[0]]
-
-    for name in cmd.get_names():
-        complete_chains[name] = {}
-        for chain_name in cmd.get_chains(name):
-            complete_chains[name][chain_name] = ''
-
-    for i in aaList['aa']:
-        complete_chains[i[3]][i[2]] += str(i[0])
+cmd.extend('subseq', subseq)
 
 
-def subseq_re():
-    print('test')
+
+# def subseq_re():
+    # print('test')
     # _target = params['target']
     # _chains = params['chains']
     # print
@@ -77,26 +68,6 @@ def subseq_re():
     #   # pradedam nuo paskutinios rastos kooridnates
     #   # klausimas: ar leidziam match'ams overlap'int?
     #   matchObj = target.search(aaComplete, matchObj.start() + 1)
-
-
-def subseq_gl():
-    print('In progress')
-
-
-cmd.extend('subseq', subseq)
-
-options = {
-    're': subseq_re,
-    'gl': subseq_gl,
-}
-
-oneLetter = {
-    'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-    'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
-    'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
-    'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M',
-    'CA': ''
-}
 
 subseq_help = '''
 @usage : subseq target=DIEVDLLKNGER, type=gl, chains=[A,C,D]
