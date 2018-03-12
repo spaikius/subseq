@@ -24,10 +24,14 @@ _one_letter = {
 # @returns: nested dictionary {model: {chain: sequence, },  }
 # @description: encapsulation, returns nested dictionary
 def get_data(_models, _chains):
-    aa_dict = _init_data() # get all data from pymol
-    _replace_to_one_letter(aa_dict) # replace all 3 letters
-    complete_chains = _create_empty_dict(_models, _chains) # creates an empty dict for complete_chains
-    _fill_dict(_models, _chains, complete_chains, aa_dict) # using pymol data fills complete_chains with data
+    # get all data from pymol
+    aa_dict = _init_data()
+    # replace all 3 letters
+    _replace_to_one_letter(aa_dict) 
+     # creates an empty dict for complete_chains
+    complete_chains = _create_empty_dict(_models, _chains)
+    # using pymol data fills complete_chains with data
+    _fill_dict(_models, _chains, complete_chains, aa_dict) 
 
     return complete_chains
 
@@ -39,12 +43,12 @@ def get_data(_models, _chains):
 def _init_data():
     aa_dict = dict()
     aa_dict['aa_list'] = list()
+
     # iterate through all c-alpha atoms and return
     # position number, three letter code, corresponding chain and model
-    cmd.iterate("name ca",
+    cmd.iterate("(name ca)",
                 "aa_list.append([resn, resi, chain, model])",
                 space=aa_dict)
-
     return aa_dict
 
 
@@ -61,12 +65,11 @@ def _replace_to_one_letter(_aa_dict):
 # @arguments: -
 # @returns: -
 # @description: constructs an empty nested dictionary _complete_chains
-# {model: {chain: {sequence: , start: , end: , }, },  }
+# {model: {chain: {sequence: str, ids: list, }, },  }
 def _create_empty_dict(_models, _chains):
     complete_chains = dict()
     sequence = 'sequence'
-    start = 'start'
-    end = 'end'
+    ids = 'ids'
 
     for model in _models:
         complete_chains[model] = dict()
@@ -78,8 +81,7 @@ def _create_empty_dict(_models, _chains):
 
             complete_chains[model][chain] = dict()
             complete_chains[model][chain][sequence] = ''
-            complete_chains[model][chain][start] = ''
-            complete_chains[model][chain][end] = ''
+            complete_chains[model][chain][ids] = list()
 
     return complete_chains
 
@@ -88,12 +90,11 @@ def _create_empty_dict(_models, _chains):
 # @arguments: -
 # @returns: -
 # @description: constructs a nested dictionary _complete_chains 
-# {model: {chain: {sequence: , start: , end: , }, },  }
+# {model: {chain: {sequence: str, ids: list, }, },  }
 # warns if any empty model is presented (does not contain any chain from users requested chains)
 def _fill_dict(_models, _chains, _complete_chains, _aa_dict):
     sequence = 'sequence'
-    start = 'start'
-    end = 'end'
+    ids = 'ids'
 
     for resn, resi, chain, model in _aa_dict['aa_list']:
         # if model or chain is not requested, skip iteration
@@ -101,12 +102,7 @@ def _fill_dict(_models, _chains, _complete_chains, _aa_dict):
             continue
 
         _complete_chains[model][chain][sequence] += resn
-
-        if len(_complete_chains[model][chain][sequence]) == 1:
-            _complete_chains[model][chain][start] = int(resi)
-            _complete_chains[model][chain][end] = int(resi)
-        else:
-            _complete_chains[model][chain][end] += 1
+        _complete_chains[model][chain][ids].append(resi)
 
     # remove all empty models and warn if found any 
     for model in _complete_chains.keys():
