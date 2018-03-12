@@ -10,16 +10,22 @@ def __init__(self):
 
     import ss_ARG
     import ss_DATA
-    # import ss_RE_SEARCH
+    import ss_RE_SEARCH
+    import ss_pymol_SELECT
 
 
 def subseq(*_argv, **_kwargs):
     try:
         ss_ARG.set_parameters(_kwargs)
         param = ss_ARG.get_parameters()
-        print(param)
+
         data = ss_DATA.get_data(param['models'], param['chains'])
-        # ss_RE_SEARCH.re_search(param, data)
+
+        search_result = None
+        if param['type'] == 're':
+            search_result = ss_RE_SEARCH.subseq_re(param['target'], data)
+
+        ss_pymol_SELECT.select(search_result)
     except Exception as e:
         print(' Error: ' + str(e))
 
