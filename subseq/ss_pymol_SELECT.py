@@ -26,8 +26,8 @@ def select(_select_list):
         chain = sele_tuple[1]
         start_id = sele_tuple[2]
         end_id = sele_tuple[3]
+        
         # select /model/?/chain/resi
-
         cmd.select(select_name, select_name +  
             " | /" + str(model) +  
             "//" + str(chain) + 
