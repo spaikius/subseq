@@ -20,14 +20,21 @@ def subseq(*_argv, **_kwargs):
         ss_ARG.set_parameters(_kwargs)
         param = ss_ARG.get_parameters()
 
-        data = ss_DATA.get_data(param['models'], param['chains'])
+        search_type = param['type']
+        target = param['target']
+        models = param['models']
+        chains = param['chains']
+        gap_cost = param['gap']
+        extend_cost = param['extend']
+        matrix = param['matrix']
+        
+        data = ss_DATA.get_data(models, chains)
 
         search_result = None
-        if param['type'] == 're':
-            search_result = ss_RE_SEARCH.subseq_re(param['target'], data)
-        elif param['type'] == 'la':
-            # search_result = ss_LA_SEARCH.subseq_la()
-            pass
+        if search_type == 're':
+            search_result = ss_RE_SEARCH.subseq_re(target, data)
+        elif search_type == 'la':
+            search_result = ss_LA_SEARCH.subseq_la(target, data, matrix, gap_cost, extend_cost)
         
         if search_result is not None:
             ss_pymol_SELECT.select(search_result)
