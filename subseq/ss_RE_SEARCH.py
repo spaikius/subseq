@@ -11,8 +11,8 @@ import re
 # @arguments: target, data (from ss_DATA.get_data())
 # @returns: list of tuple (model, chain, start_pos, end_pos)
 #           or 'None' if no matches have been found
-# @description: for given target seacrh through data using RegExp method
-# warn if no matche have been found
+# @description: for given target search through data using RegExp method
+# warn if no match have been found
 def subseq_re(_target, _data):
     target = _target
     data = _data
