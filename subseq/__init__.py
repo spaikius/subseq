@@ -23,9 +23,9 @@ def subseq(*_argv, **_kwargs):
         data = ss_DATA.get_data(param['models'], param['chains'])
 
         search_result = None
-        if param['type'] is 're':
+        if param['type'] == 're':
             search_result = ss_RE_SEARCH.subseq_re(param['target'], data)
-        elif param['type'] is 'la':
+        elif param['type'] == 'la':
             # search_result = ss_LA_SEARCH.subseq_la()
             pass
         
