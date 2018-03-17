@@ -8,12 +8,13 @@
 #                     _parse_str_to_list,
 #                     _get_all_modules,
 #                     _get_all_chains
-# @private variables: _algorithm_type_values, _params
+# @private variables: _search_type_values, _params
 
 from pymol import cmd
+import os
 import re
 
-_algorithm_type_values = ['re',  # Regular Expresion (default)
+_search_type_values = ['re',  # Regular Expresion (default)
                 'la'   # Local alignment
                 ]
 
@@ -78,9 +79,9 @@ def _set_parameters(_kwargs):
 # @description: validates all values of a dictionary (_params).
 # If key value is not provided, it will set the default value
 def _validate_parameters():
-    algorithm_type = _params['type']
+    search_type = _params['type']
 
-    default_algo_type = _algorithm_type_values[0]
+    default_search_type = _search_type_values[0]
     default_gap_cost = 10
     default_gap_extend_cost = 2
     default_score_matrix = 'blosum62'
@@ -96,11 +97,11 @@ def _validate_parameters():
     pymol_models_chains = _get_all_chains(pymol_models)
 
     #-- Algorithm type validation
-    if algorithm_type is None:
-        _params['type'] = default_algo_type
+    if search_type is None:
+        _params['type'] = default_search_type
     else:
-        if algorithm_type not in _algorithm_type_values:
-            raise Exception("Undefined algorithm type: " + str(algorithm_type))
+        if search_type not in _search_type_values:
+            raise Exception("Undefined algorithm type: " + str(search_type))
 
     #-- Target validation
     if target is None:
@@ -113,7 +114,8 @@ def _validate_parameters():
         models_list = _parse_str_to_list(models)
         for model in models_list:
             if model not in pymol_models:
-                raise Exception("Model '" + str(model) + "' is not available\n" +
+                raise Exception("Model '" + str(model) + 
+                    "' is not available\n" +
                     "Available models: " + str(pymol_models))
 
         _params['models'] = models_list
@@ -125,32 +127,36 @@ def _validate_parameters():
         chains_list = _parse_str_to_list(chains)
         for chain in chains_list:
             if chain not in pymol_models_chains:
-                raise Exception("Chain '" + str(chain) + "' is not available\n" +
+                raise Exception("Chain '" + str(chain) + 
+                    "' is not available\n" +
                     "Available chains: " + str(pymol_models_chains))
 
         _params['chains'] = chains_list
-
-
-    if _params['type'] is not 'la':
-        return
 
     #-- Gap cost validation
     if gap_cost is None:
         _params['gap'] = default_gap_cost
     elif not isinstance(gap_cost, (int, float)):
-        raise Exception("Gap cost must be type of int or flaot. Got: " + 
+        raise Exception("Gap cost must be type of int or flaot. Got: " +
             str(gap_cost) + " (" + str(type(gap_cost)) + ")")
 
     #-- Gap Extend cost validation
     if gap_extend_cost is None:
         _params['extend'] = default_gap_extend_cost
     elif not isinstance(gap_extend_cost, (int, float)):
-        raise Exception("Gap extend cost must be type of int or flaot. Got: " + 
+        raise Exception("Gap extend cost must be type of int or flaot. Got: " +
             str(gap_extend_cost) + " (" + str(type(gap_extend_cost)) + ")")
 
     #-- Matrix validation
-    if matrix is None:
-        _params['matrix'] = default_score_matrix
+    if score_matrix is None:
+        _params['matrix'] = os.path.join(
+            os.path.dirname(__file__), 
+            default_score_matrix)
+    else:
+        if os.path.isfile(score_matrix):
+            _params['matrix'] = score_matrix
+        else:
+            raise Exception("File does not exist: " + str(score_matrix))
 
 
 # @function type: private
