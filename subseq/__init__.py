@@ -11,6 +11,7 @@ def __init__(self):
     import ss_ARG
     import ss_DATA
     import ss_RE_SEARCH
+    import ss_LA_SEARCH
     import ss_pymol_SELECT
 
 
@@ -22,10 +23,17 @@ def subseq(*_argv, **_kwargs):
         data = ss_DATA.get_data(param['models'], param['chains'])
 
         search_result = None
-        if param['type'] == 're':
+        if param['type'] is 're':
             search_result = ss_RE_SEARCH.subseq_re(param['target'], data)
+        elif param['type'] is 'la':
+            # search_result = ss_LA_SEARCH.subseq_la()
+            pass
+        
+        if search_result is not None:
+            ss_pymol_SELECT.select(search_result)
+        else:
+            print("Empty")
 
-        ss_pymol_SELECT.select(search_result)
     except Exception as e:
         print(' Error: ' + str(e))
 

@@ -4,8 +4,10 @@
 # @private functions: -
 # @private variables: -
 
+import numpy as np
 
-def subseq_la(_target, _data,_matrix , _gap_cost, _extend_cost, _match_value):
+
+def subseq_la(_target, _data, _matrix, _gap_cost, _extend_cost, _match_value):
     target = _target
     data = _data
     matrix = _matrix
@@ -15,6 +17,8 @@ def subseq_la(_target, _data,_matrix , _gap_cost, _extend_cost, _match_value):
 
     for model in data.keys():
         for chain in data[model].keys():
-            _SWA(target, model, matrix, gap_cost, extend_cost, match_value)
+            _SWA(target, model, chain, matrix, gap_cost, extend_cost, match_value)
+
 
 def _SWA():
+	pass

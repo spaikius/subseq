@@ -18,10 +18,13 @@ _algorithm_type_values = ['re',  # Regular Expresion (default)
                 ]
 
 _params = {
-    'type': None,
+    'type':   None,
     'target': None,
     'models': None,
     'chains': None,
+    'gap':    None,
+    'extend': None,
+    'matrix': None,
 }
 
 
@@ -61,7 +64,7 @@ def _set_parameters(_kwargs):
     for key, value in _kwargs.items():
         key = key.lower()
 
-        # Check if given keys exists in _params dictionary
+        # Check if given keys exist in _params dictionary
         # if not raise an exception
         if key in _params:
             _params[key] = value
@@ -76,10 +79,18 @@ def _set_parameters(_kwargs):
 # If key value is not provided, it will set the default value
 def _validate_parameters():
     algorithm_type = _params['type']
+
     default_algo_type = _algorithm_type_values[0]
+    default_gap_cost = 10
+    default_gap_extend_cost = 2
+    default_score_matrix = 'blosum62'
+
     target = _params['target']
     models = _params['models']
     chains = _params['chains']
+    gap_cost = _params['gap']
+    gap_extend_cost = _params['extend']
+    score_matrix = _params['matrix']
 
     pymol_models = _get_all_models()
     pymol_models_chains = _get_all_chains(pymol_models)
@@ -118,6 +129,29 @@ def _validate_parameters():
                     "Available chains: " + str(pymol_models_chains))
 
         _params['chains'] = chains_list
+
+
+    if _params['type'] is not 'la':
+        return
+
+    #-- Gap cost validation
+    if gap_cost is None:
+        _params['gap'] = default_gap_cost
+    elif not isinstance(gap_cost, (int, float)):
+        raise Exception("Gap cost must be type of int or flaot. Got: " + 
+            str(gap_cost) + " (" + str(type(gap_cost)) + ")")
+
+    #-- Gap Extend cost validation
+    if gap_extend_cost is None:
+        _params['extend'] = default_gap_extend_cost
+    elif not isinstance(gap_extend_cost, (int, float)):
+        raise Exception("Gap extend cost must be type of int or flaot. Got: " + 
+            str(gap_extend_cost) + " (" + str(type(gap_extend_cost)) + ")")
+
+    #-- Matrix validation
+    if matrix is None:
+        _params['matrix'] = default_score_matrix
+
 
 # @function type: private
 # @arguments: string
