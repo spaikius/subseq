@@ -39,7 +39,7 @@ class SWA:
         aa1 = self.seq1[i - 1]
         aa2 = self.seq2[j - 1]
 
-        similarity = sub_matrix.get_score(aa1, aa2)
+        similarity = sub_matrix[aa1, aa2]
 
         diag_score = self.score_matrix[i - 1][j - 1] + int(similarity)
         up_score = self.score_matrix[i - 1][j] - self.gap

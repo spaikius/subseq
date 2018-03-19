@@ -1,5 +1,7 @@
 """Description
 
+This module is desgined to extract data from pymol 
+
 """
 from pymol import cmd
 from HelperFunctions import get_chains
