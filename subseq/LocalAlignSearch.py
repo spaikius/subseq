@@ -4,7 +4,7 @@
 # @private functions: -
 # @private variables: -
 
-import ss_SubMatrix as SubMatrix
+import SubMatrix
 
 class SWA:
     def __init__(self, seq1, seq2, gap_cost, extend_cost):
