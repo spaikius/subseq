@@ -1,201 +1,142 @@
-# @module ss_ARG.py
-# @public functions: set_parameters,
-#                    get_paramaters,
-#                    reset_parameters
-# @public variables: -
-# @private functions: _set_parameters,
-#                     _validate_parameters,
-#                     _parse_str_to_list,
-#                     _get_all_modules,
-#                     _get_all_chains
-# @private variables: _search_type_values, _params
+"""Description
 
-from pymol import cmd
+This module is designed to parse and validate raw kwargs (keyword arguments)
+from Pymol command line.
+
+"""
+
 import os
-import re
 
-_search_type_values = ['re',  # Regular Expresion (default)
-                'la'   # Local alignment
-                ]
+from HelperFunctions import get_all_models, get_all_chains, parse_str_to_list
 
-_params = {
-    'type':   None,
-    'target': None,
-    'models': None,
-    'chains': None,
-    'gap':    None,
-    'extend': None,
-    'matrix': None,
-}
+class ParseKwargs:
+    errors = {
+        'inputError':         '1',
+        'algorithmTypeError': '2',
+        'targetValueError':   '3',
+        'unknownModelError':  '4',
+        'unknownChainError':  '5',
+        'gapCostError':       '6',
+        'fileError':          '7',
+    }
 
+    algorithm_types = [
+        're',  # Regular Expression (default)
+        'la'   # Local alignment
+    ]
 
-# @function type: public
-# @arguments: pointer to a dictionary
-# @returns: -
-# @description: encapsulation
-def set_parameters(_kwargs):
-    _set_parameters(_kwargs)
-    _validate_parameters()
-
-
-# @function type: public
-# @arguments: -
-# @returns: dictionary
-def get_parameters():
-    return _params
-
-
-# @function type: public
-# @arguments: -
-# @returns: -
-# @description: sets all values of a dictionary (_params) to 'None'
-def reset_parameters():
-    for key in _params.keys():
-        _params[key] = None
-
-
-# @functions type: private
-# @arguments: pointer to a dictionary
-# @returns: -
-# @description: sets all values of a dictionary (_params)
-# to a coresponding given key
-def _set_parameters(_kwargs):
-    # Remove '_self' key if presented
-    _kwargs.pop('_self', None)
-    for key, value in _kwargs.items():
-        key = key.lower()
-
-        # Check if given keys exist in _params dictionary
-        # if not raise an exception
-        if key in _params:
-            _params[key] = value
-        else:
-            raise Exception('Unknown parameter: ' + str(key))
-
-
-# @functions type: private
-# @arguments: -
-# @returns: -
-# @description: validates all values of a dictionary (_params).
-# If key value is not provided, it will set the default value
-def _validate_parameters():
-    search_type = _params['type']
-
-    default_search_type = _search_type_values[0]
+    default_algorithm = algorithm_types[0]
     default_gap_cost = 10
-    default_gap_extend_cost = 2
     default_score_matrix = 'blosum62'
 
-    target = _params['target']
-    models = _params['models']
-    chains = _params['chains']
-    gap_cost = _params['gap']
-    gap_extend_cost = _params['extend']
-    score_matrix = _params['matrix']
+    def __init__(self, kwargs):
+        self.parameters = {
+            'algorithm':   None,
+            'target':      None,
+            'models':      None,
+            'chains':      None,
+            'gapcost':     None,
+            'submatrix':   None,
+        }
 
-    pymol_models = _get_all_models()
-    pymol_models_chains = _get_all_chains(pymol_models)
+        self.set_parameters(kwargs)
+        self.validate_all_parameters()
 
-    #-- Algorithm type validation
-    if search_type is None:
-        _params['type'] = default_search_type
-    else:
-        if search_type not in _search_type_values:
-            raise Exception("Undefined algorithm type: " + str(search_type))
+    def __getitem__(self, param):
+        return self.parameters[param]
 
-    #-- Target validation
-    if target is None:
-        raise Exception("Parameter 'target=' must be defined")
-    else:
-        _params['target'] = target.upper()
+    def set_parameters(self, kwargs):
+        # Remove '_self' key if presented
+        kwargs.pop('_self', None)
 
-    #-- Models validation
-    if models is None:
-        _params['models'] = pymol_models
-    else:
-        models_list = _parse_str_to_list(models)
-        for model in models_list:
-            if model not in pymol_models:
-                raise Exception("Model '" + str(model) + 
-                    "' is not available\n" +
-                    "Available models: " + str(pymol_models))
+        # Set self.parameters[key] values from kwargs key-value pairs
+        for key, value in kwargs.items():
+            key = key.lower()
+            value = value.lower()
 
-        _params['models'] = models_list
+            if key in self.parameters:
+                self.parameters[key] = value
+            else:
+                # If there is no such key in self.parameters, then raise exception
+                raise Exception("Error number: {}, unexpected parameter: {}"
+                                .format(self.errors['inputError'], key))
 
-    #-- Chains validation
-    if chains is None:
-        _params['chains'] = pymol_models_chains
-    else:
-        chains_list = _parse_str_to_list(chains)
-        for chain in chains_list:
-            if chain not in pymol_models_chains:
-                raise Exception("Chain '" + str(chain) + 
-                    "' is not available\n" +
-                    "Available chains: " + str(pymol_models_chains))
+    def validate_all_parameters(self):
+        self.algorithm_validation()
+        self.target_validation()
+        self.models_validation()
+        self.chains_validation()
+        self.gapcost_validation()
+        self.submatrix_validation()
 
-        _params['chains'] = chains_list
-
-    #-- Gap cost validation
-    if gap_cost is None:
-        _params['gap'] = default_gap_cost
-    elif not isinstance(gap_cost, (int, float)):
-        raise Exception("Gap cost must be type of int or flaot. Got: " +
-            str(gap_cost) + " (" + str(type(gap_cost)) + ")")
-
-    #-- Gap Extend cost validation
-    if gap_extend_cost is None:
-        _params['extend'] = default_gap_extend_cost
-    elif not isinstance(gap_extend_cost, (int, float)):
-        raise Exception("Gap extend cost must be type of int or flaot. Got: " +
-            str(gap_extend_cost) + " (" + str(type(gap_extend_cost)) + ")")
-
-    #-- Matrix validation
-    if score_matrix is None:
-        _params['matrix'] = os.path.join(
-            os.path.dirname(__file__), 
-            default_score_matrix)
-    else:
-        if os.path.isfile(score_matrix):
-            _params['matrix'] = score_matrix
+    def algorithm_validation(self):
+        if self.parameters['algorithm'] is None:
+            self.parameters['algorithm'] = self.default_algorithm
         else:
-            raise Exception("File does not exist: " + str(score_matrix))
+            if self.parameters['algorithm'] not in self.algorithm_types:
+                raise Exception("Error number: {}, unexpected algorithm type {}"
+                                .format(self.errors['algorithmTypeError']
+                                        , self.parameters['algorithm']))
 
+    def target_validation(self):
+        if self.parameters['target'] is None:
+            raise Exception("Error number: {}, parameter 'target=' must be defined"
+                            .format(self.errors['targetValueError']))
+        else:
+            self.parameters['target'] = self.parameters['target'].upper()
 
-# @function type: private
-# @arguments: string
-# @returns: list
-# @descriptions: parses string from _kwargs values and returns list 
-def _parse_str_to_list(_str):
-    # split by any seperator (, . / etc.)
-    raw_str = re.sub('([A-Za-z0-9_]+)', r'\1', _str)
-    # remove symbols '[', ']', ''', '"', white spaces
-    raw_str = re.sub('[\[\]\'\"\s]', '', raw_str)
-    return raw_str.split(',')
+    def models_validation(self):
+        all_pymol_models = get_all_models()
 
+        if self.parameters['models'] is None:
+            self.parameters['models'] = all_pymol_models
+        else:
+            models_list = parse_str_to_list(self.parameters['models'])
 
-# @function type: private
-# @arguments: -
-# @returns: a list of models
-# @descriptions: returns names list of all existing models in pymol
-# raises an exception if no model was found
-def _get_all_models():
-    models = cmd.get_names()
+            # Check if all models are opened by pymol
+            for model in models_list:
+                if model not in all_pymol_models:
+                    raise Exception("Error number: {}, found unknown model {}"
+                                    .format(self.errors['unknownModelError']
+                                            , model))
 
-    if not bool(models):
-        raise Exception("No models are currently opened")
+            self.parameters['models'] = models_list   
 
-    return models
-  
+    def chains_validation(self):
+        all_models_chains = get_all_chains(self.parameters['models'])
 
-# @function type: private
-# @arguments: a list of models
-# @returns: a list of chains with no duplicates
-# @description: gets all chains in provided models and returns a list
-# without duplicates
-def _get_all_chains(_models):
-    chain_list = list()
-    for model in _models:
-        for chain in cmd.get_chains(model):
-            chain_list.append(chain)
+        if self.parameters['chains'] is None:
+            self.parameters['chains'] = all_models_chains
+        else:
+            chains_list = parse_str_to_list(self.parameters['chains'])
+            for chain in chains_list:
+                if chain not in all_models_chains:
+                    raise Exception("Error number: {}, found unknown chain {}"
+                                    .format(self.errors['unknownChainError']
+                                            , chain))
 
-    return list(set(chain_list))
+            self.parameters['chains'] = chains_list
+
+    def gapcost_validation(self):
+        if self.parameters['gapcost'] is None:
+            self.parameters['gapcost'] = self.default_gap_cost
+        else:
+            try:
+                gap_cost = float(self.parameters['gapcost'])
+                self.parameters['gapcost'] = gap_cost
+            except:
+                raise Exception("Error number: {}, gap cost must be \
+                                type of int or float. Got {}"
+                                .format(self.errors['gapCostError']
+                                        , self.parameters['gapcost']))
+
+    def submatrix_validation(self):
+        if self.parameters['submatrix'] is None:
+            self.parameters['submatrix'] = \
+                os.path.join(os.path.dirname(__file__)
+                             , self.default_score_matrix)
+        else:
+            if not os.path.isfile(self.parameters['submatrix']):
+                raise Exception("Error number: {}, file or dir does not exist {}"
+                                .format(self.errors['fileError']
+                                        ,os.path.basename(self.parameters['submatrix'])))
