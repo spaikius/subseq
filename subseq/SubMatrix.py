@@ -1,6 +1,11 @@
 
 class SubMatrix:
+    errors = {
+        "badKeyError": '1',
+    }
+
     def __init__(self, matrix_path):
+        self.matrix = None
         self._load_matrix(matrix_path)
 
     def _load_matrix(self, matrix_path):
@@ -27,7 +32,15 @@ class SubMatrix:
 
         self.matrix = matrix
 
-    def get_score(self, a, b):
-        if a not in self.matrix or b not in self.matrix[a]:
-            raise Exception('Bad pair in substitution matrix: [%s, %s]' % (a, b))
-        return self.matrix[a][b]
+    def __getitem__(self, key): 
+        if isinstance(key, tuple):
+            try:
+                x = self
+                for k in key:
+                    x = x[k]
+                return x
+            except:
+                 raise Exception("Error number: {}, bad key {}"
+                                .format(self.errors['badKeyError'], key))
+        else:
+            return self.matrix[key]
