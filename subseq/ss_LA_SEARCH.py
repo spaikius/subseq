@@ -4,40 +4,7 @@
 # @private functions: -
 # @private variables: -
 
-
-class SubMatrix:
-    def __init__(self, matrix_path):
-        self._load_matrix(matrix_path)
-
-    def _load_matrix(self, matrix_path):
-        with open(matrix_path, 'r') as fh:
-            matrix = fh.read()
-
-        lines = matrix.strip().split('\n')
-        # remove comments
-        lines = [line for line in lines if line[0] != '#']
-
-        header = lines.pop(0)
-        columns = header.split()
-        matrix = dict()
-
-        for row in lines:
-            entries = row.split()
-            row_name = entries.pop(0)
-            matrix[row_name] = dict()
-
-            if len(entries) != len(columns):
-                raise Exception('Improper entry number in row')
-            for column_name in columns:
-                matrix[row_name][column_name] = entries.pop(0)
-
-        self.matrix = matrix
-
-    def get_score(self, a, b):
-        if a not in self.matrix or b not in self.matrix[a]:
-            raise Exception('Bad pair in substitution matrix: [%s, %s]' % (a, b))
-        return self.matrix[a][b]
-
+import ss_SubMatrix as SubMatrix
 
 class SWA:
     def __init__(self, seq1, seq2, gap_cost, extend_cost):
@@ -111,6 +78,8 @@ class SWA:
 
         self.aligned_seq1 = ''.join(reversed(a_seq1_list))
         self.aligned_seq2 = ''.join(reversed(a_seq2_list))
+        _alignment_seq()
+
 
     def _next_move(self, i, j):
         diag = self.score_matrix[i - 1][j - 1]
@@ -124,15 +93,33 @@ class SWA:
         if left > diag and left >= up:
             return 3 if left != 0 else 0
 
+
     def _alignment_seq(self):
-        pass
+        for aa1, aa2 in zip(self.aligned_seq1, self.aligned_seq2):
+            if aa1 == aa2:
+                self.alignment += '|'
+            elif '-' in (aa1, aa2):
+                self.alignment += ' '
+            else:
+                self.alignment += ':'
+
+
+    def print_r(self):
+        for i in range(0, alength, 60):
+            seq1_slice = self.aligned_seq1[i:i+60]
+            print('Query  {0:<4}  {1}  {2:<4}'.format(i + 1, seq1_slice, i + len(seq1_slice)))
+            print('             {0}'.format(self.alignment[i:i+60]))
+            seq2_slice = self.aligned_seq2[i:i+60]
+            print('Sbjct  {0:<4}  {1}  {2:<4}'.format(i + 1, seq2_slice, i + len(seq2_slice)))
+            print()
 
 
 def subseq_la(_target, _data, _matrix, _gap_cost, _extend_cost):
-    sub_matrix = SubMatrix(_matrix)
+    sub_matrix = SubMatrix.SubMatrix(_matrix)
 
     for model in _data.keys():
         for chain in _data[model].keys():
             alignment = SWA(_target, chain, _gap_cost, _extend_cost)
             alignment.fill_data(sub_matrix)
             alignment.traceback()
+            alignment.print_r()

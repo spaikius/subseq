@@ -49,14 +49,3 @@ def subseq(*_argv, **_kwargs):
 
 
 cmd.extend('subseq', subseq)
-
-
-subseq_help = '''
-@usage : subseq target=DIEVDLLKNGER, type=gl, chains=[A,C,D]
-@@ Please note: arguments must be sepereted with comma (,) 
-@params:
-(required) target=(str)   : target sequence
-(optional) model=[array]  : default all
-(optional) type=(str)     : re or lo default re
-(optional) chains=[array] : default all
-'''

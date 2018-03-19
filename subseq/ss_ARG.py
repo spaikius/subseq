@@ -106,6 +106,8 @@ def _validate_parameters():
     #-- Target validation
     if target is None:
         raise Exception("Parameter 'target=' must be defined")
+    else:
+        _params['target'] = target.upper()
 
     #-- Models validation
     if models is None:
