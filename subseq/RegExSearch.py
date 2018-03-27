@@ -1,21 +1,22 @@
-# @module ss_RE_SEARCH.py
-# @public functions: subseq_re
-# @public variables: -
-# @private functions: -
-# @private variables: -
+"""Description
+
+This module is designed to search requested subsequence using Regular Expresion
+
+Module attributes:
+    subseq_re(target: str, data: dict) -> list
+        workflow:
+            1) create a RegExp object from target (function parameter)
+            2) scan data (function parameter) by using RegExp object
+            3) append information about match to match_list
+            4) return match_list if its length is not 0 else return none
+
+"""
+
 
 import re
 
 
-# @function type: public
-# @arguments: target, data (from ss_DATA.get_data())
-# @returns: list of tuple (model, chain, start_pos, end_pos)
-#           or 'None' if no matches have been found
-# @description: for given target search through data using RegExp method
-# warn if no match have been found
-def subseq_re(_target, _data):
-    target = _target
-    data = _data
+def subseq_re(target, data):
     sequence = 'sequence'
     ids = 'ids'
     match_list = list()
@@ -25,17 +26,17 @@ def subseq_re(_target, _data):
         # re.I - ignore case sensetive
         re_target = re.compile(target, re.I)
     except:
-        raise Exception('Bad syntax - target(RegExp): ' + str(_target))
+        raise Exception('Bad syntax - target(RegExp): ' + str(target))
 
+    # scan data by using RegExp object
     for model in data.keys():
         for chain in data[model].keys():
             for match in re_target.finditer(data[model][chain][sequence]):
+
                 start_id = data[model][chain][ids][match.start()]
                 end_id = data[model][chain][ids][match.end() - 1]
+                
                 match_list.append((model, chain, start_id, end_id))
 
-    if len(match_list) != 0:
-        return match_list
-    else:
-        print("Warrning: No mathces have been found for given target: " + str(target))
-        return None
+    # return match list if its length is not 0 else return None
+    return match_list if len(match_list) != 0 else None

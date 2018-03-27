@@ -51,7 +51,7 @@ def parse_str_to_list(string):
     # split by any seperator (, . / etc.)
     raw_str = re.sub('([A-Za-z0-9_]+)', r'\1', string)
 
-    # remove symbols '[', ']', ''', '"', white spaces
+    # remove symbols '[', ']', ''', '"', white space
     raw_str = re.sub('[\[\]\'\"\s]', '', raw_str)
 
     return raw_str.split(',')

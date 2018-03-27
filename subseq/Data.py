@@ -1,6 +1,76 @@
 """Description
 
-This module is desgined to extract data from pymol 
+This module is desgined to extract and access data from pymol.
+
+Data(class):
+    Description
+        This class creates an empty dictionary and fills it with data
+        from pymol cmd.iterate command.
+
+        self.data schema:
+        self.data = {   model_name: {
+                            chain_name:{
+                                sequence: str
+                                ids: [...]
+                            },
+                            ...
+                        },
+                        ...
+                    }
+
+    Class attributes:
+        - one_later(dict): static
+            dictionary to look up the one letter codes
+
+        - __init__(models: list, chains: list): typed
+            Constructor
+
+        - __getitem__(key: tuple/str) -> dict/list/str: typed
+            Getter. Returns self.data inner child
+
+        - keys() -> list: typed
+            Returns all self.data top level keys
+        
+        - construct_empty_data_dict(): typed
+            Initializes data structure self.data 
+            schema:
+                model: {chain: {sequence: '', ids: list()}}
+            
+            model and chain names are provided in self.models (list) and 
+            self.chains (list) respectively
+
+        - get_data_from_pymol() -> dict: static
+            Extracts data from pymol using `cmd.iterate` command.
+            Returns a dictionary:
+                aa_dict = { 'aa_list': [[resn, resi, chain, model], ...}
+                where
+                    resn - position number,
+                    resi - 3 letter aa code
+                    chain - chain name
+                    model - model name
+
+        - fill_empty_data_dict(aa_dict: dict): typed
+            Fills self.data using get_data_from_pymol() constructed dictionary.
+            Calls replace_to_one_letter(), fill_data(), filter_data() respectively 
+        
+        - replace_to_one_letter(aa: dict): typed
+            Replaces all 3 letter aa code to 1 letter aa code
+            for get_data_from_pymol() constructed dictionary
+
+        - fill_data(): typed
+            Initializes self.data[model][chain] keys:
+                - sequence: aa chain sequence
+                - ids: list of ids
+            please note: 
+
+        - filter_data(): typed
+            Remove all blank attributes from self.data dictionary
+
+
+    Accessing data through class object:
+        class_obj['model_name', 'chain_name', 'sequence']
+        or
+        class_obg['model_name']['chain_name']['sequence']
 
 """
 from pymol import cmd

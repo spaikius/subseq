@@ -1,3 +1,27 @@
+"""Description
+
+This module is designed to get a score from substitution matrix
+
+Module attribute:
+    SubMatrix (class):
+        class attributes:
+            - __init__(matrix_path: str): typed
+                constructor
+                
+            - load_matrix(matrix_path: str): typed
+                loads substitution matrix from given path in matrix_path
+    
+            - __getitem__(key: tuple/str): typed
+                returns value for given key or keys set
+
+        usage:
+            matrix = SubMatrix(path_to_matrix)
+            matrix['A']['L'] 
+            # or  
+            matrix['A', 'L']
+
+"""
+
 
 class SubMatrix:
     errors = {
@@ -6,9 +30,9 @@ class SubMatrix:
 
     def __init__(self, matrix_path):
         self.matrix = None
-        self._load_matrix(matrix_path)
+        self.load_matrix(matrix_path)
 
-    def _load_matrix(self, matrix_path):
+    def load_matrix(self, matrix_path):
         with open(matrix_path, 'r') as fh:
             matrix = fh.read()
 

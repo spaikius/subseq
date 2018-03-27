@@ -2,31 +2,64 @@
 
 This module is designed to parse and validate raw kwargs (keyword arguments)
 from Pymol command line.
+    
+ParseKwargs (class):
+    class description:
+        This class is designed to parse and validate
+        raw kwargs (keyword arguments)    
 
-Attributes:
-    ParseKwargs (class):
-        class attributes:
-            - errors (dict): static.                    Key: type of error, value: error code
-            - algorithm_types (list): static.           All avialable algorithms 
-            - default_algorithm (str): static.          Default algorithm
-            - default_gap_cost (int): static.           Default gap cost (10)
-            - default_score_matrix (str): static.       Default score matrix (blossum62)
-            - parameters (dict): typed.                 Contains all parameters values 
-            - __init__ (func): typed.                   Constructor
-            - __getitem__ (func): typed.                Getter 
-            - set_parameters (func): typed.             Set parameters(class attribute) key-value pairs
-            - validate_all_parameters (func): typed. 
-            - algorithm_validation (func): typed.       Validates algorithm type
-            - target_validation (func): typed.          Validates target
-            - models_validation (func): typed.          Validates models
-            - chains_validation (func): typed.          Validates chains
-            - gapcost_validation (func): typed.         Validates gap cost
-            - submatrix_validation (func): typed.       Validates substitution matrix
+    class param attribute keys:
+        algorithm, target, models, chains, gapcost, submatrix
 
+    class attributes:
+        - algorithm_types (list): static.
+            All avialable algorithms 
+
+        - default_algorithm (str): static.
+            Default algorithm (re) RegExp
+
+        - default_gap_cost (int): static.
+            Default gap cost (10)
+
+        - default_score_matrix (str): static.
+            Default score matrix (blossum62)
+
+        - parameters (dict): typed.
+            Contains all parameters values
+        
+        - __init__ (kwargs: dict): typed.
+            Constructor
+
+        - __getitem__ (param: str) -> str: typed.
+            Getter. Returns a value for given key from `param` dictionary
+                
+        - set_parameters (kwargs: dict): typed.
+            Set parameters(class attribute) key-value pairs
+
+        - validate_all_parameters (): typed.
+            Calls all *_validation() functions
+
+        - algorithm_validation (): typed.
+            Validates algorithm type
+
+        - target_validation (): typed.
+            Validates target
+
+        - models_validation (): typed.
+            Validates models
+
+        - chains_validation (): typed.
+            Validates chains
+
+        - gapcost_validation (): typed.
+            Validates gap cost
+
+        - submatrix_validation (): typed.
+            Validates substitution matrix
 
 Example:
     ParseKwargs_obj = ParseKwargs(kwargs)
-    ParseKwargs_obj['target']
+    target_value = ParseKwargs_obj['target']
 
 """
 
