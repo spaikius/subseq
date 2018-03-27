@@ -68,16 +68,6 @@ import os
 from HelperFunctions import get_all_models, get_all_chains, parse_str_to_list
 
 class ParseKwargs:
-    errors = {
-        'inputError':         '1',
-        'algorithmTypeError': '2',
-        'targetValueError':   '3',
-        'unknownModelError':  '4',
-        'unknownChainError':  '5',
-        'gapCostError':       '6',
-        'fileError':          '7',
-    }
-
     algorithm_types = [
         're',  # Regular Expression (default)
         'la'   # Local alignment
@@ -116,8 +106,7 @@ class ParseKwargs:
                 self.parameters[key] = value
             else:
                 # If there is no such key in self.parameters, then raise exception
-                raise Exception("Error number: {}, unexpected parameter: {}"
-                                .format(self.errors['inputError'], key))
+                raise Exception("Unexpected parameter: {}".format(key))
 
     def validate_all_parameters(self):
         self.algorithm_validation()
@@ -132,13 +121,12 @@ class ParseKwargs:
             self.parameters['algorithm'] = self.default_algorithm
         else:
             if self.parameters['algorithm'] not in self.algorithm_types:
-                raise Exception("Error number: {}, unexpected algorithm type {}"
-                                .format(self.errors['algorithmTypeError']
-                                        , self.parameters['algorithm']))
+                raise Exception("Unexpected algorithm type {}"
+                                .format(self.parameters['algorithm']))
 
     def target_validation(self):
         if self.parameters['target'] is None:
-            raise Exception("Error number: {}, parameter 'target=' must be defined"
+            raise Exception("Parameter 'target=' must be defined"
                             .format(self.errors['targetValueError']))
         else:
             self.parameters['target'] = self.parameters['target'].upper()
@@ -154,9 +142,7 @@ class ParseKwargs:
             # Check if all models are opened by pymol
             for model in models_list:
                 if model not in all_pymol_models:
-                    raise Exception("Error number: {}, found unknown model {}"
-                                    .format(self.errors['unknownModelError']
-                                            , model))
+                    raise Exception("Found unknown model {}".format(model))
 
             self.parameters['models'] = models_list   
 
@@ -169,9 +155,7 @@ class ParseKwargs:
             chains_list = parse_str_to_list(self.parameters['chains'])
             for chain in chains_list:
                 if chain not in all_models_chains:
-                    raise Exception("Error number: {}, found unknown chain {}"
-                                    .format(self.errors['unknownChainError']
-                                            , chain))
+                    raise Exception("Found unknown chain {}".format(chain))
 
             self.parameters['chains'] = chains_list
 
@@ -183,10 +167,9 @@ class ParseKwargs:
                 gap_cost = float(self.parameters['gapcost'])
                 self.parameters['gapcost'] = gap_cost
             except:
-                raise Exception("Error number: {}, gap cost must be \
+                raise Exception("Gap cost must be \
                                 type of int or float. Got {}"
-                                .format(self.errors['gapCostError']
-                                        , self.parameters['gapcost']))
+                                .format(self.parameters['gapcost']))
 
     def submatrix_validation(self):
         if self.parameters['submatrix'] is None:
@@ -195,6 +178,6 @@ class ParseKwargs:
                              , self.default_score_matrix)
         else:
             if not os.path.isfile(self.parameters['submatrix']):
-                raise Exception("Error number: {}, file or dir does not exist {}"
-                                .format(self.errors['fileError']
-                                        ,os.path.basename(self.parameters['submatrix'])))
+                raise Exception("File or dir does not exist {}"
+                                .format(os.path.basename(
+                                    self.parameters['submatrix'])))

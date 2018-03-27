@@ -64,7 +64,7 @@ Data(class):
             please note: 
 
         - filter_data(): typed
-            Remove all blank attributes from self.data dictionary
+            Remove all blank attributes in self.data dictionary
 
 
     Accessing data through class object:
@@ -78,10 +78,6 @@ from HelperFunctions import get_chains
 
 
 class Data:
-    errors = {
-        "badKeyError": '1',
-    }
-
     one_letter = {
         'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
@@ -107,8 +103,7 @@ class Data:
                     x = x[k]
                 return x
             except:
-                raise Exception("Error number: {}, bad key {}"
-                                .format(self.errors['badKeyError'], key))
+                raise Exception("DATA: bad key {}".format(key))
         else:
             return self.data[key]
 

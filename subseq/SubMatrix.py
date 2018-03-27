@@ -24,10 +24,6 @@ Module attribute:
 
 
 class SubMatrix:
-    errors = {
-        "badKeyError": '1',
-    }
-
     def __init__(self, matrix_path):
         self.matrix = None
         self.load_matrix(matrix_path)
@@ -64,7 +60,6 @@ class SubMatrix:
                     x = x[k]
                 return x
             except:
-                 raise Exception("Error number: {}, bad key {}"
-                                .format(self.errors['badKeyError'], key))
+                 raise Exception("SubMatrix: Bad key {}".format(key))
         else:
             return self.matrix[key]
