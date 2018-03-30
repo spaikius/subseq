@@ -16,7 +16,7 @@ def get_all_models():
 
     models = cmd.get_names()
 
-    # if list is empty -> no models are currently aviable
+    # if a list is empty -> no models are currently avialable
     if not bool(models):
         raise Exception("No models are currently opened")
 
@@ -48,7 +48,7 @@ def get_chains(model):
 def parse_str_to_list(string):
 	""" Parse a string and return a list of values """
 
-    # split by any seperator (, . / etc.)
+    # split by any seperator (, . / etc.) excluding all letters, numbers and _
     raw_str = re.sub('([A-Za-z0-9_]+)', r'\1', string)
 
     # remove symbols '[', ']', ''', '"', white space
