@@ -7,11 +7,23 @@
 import SubMatrix
 import SmithWaterman
 
-def subseq_la(target, data, matrix, gap_cost):
+
+def subseq_la(target, data, matrix, gap_cost, minscore):
     sub_matrix = SubMatrix.SubMatrix(matrix)
 
     for model in data.keys():
         for chain in data[model].keys():
             sequence = data[model][chain]['sequence']
-            aligment = SmithWaterman.SmithWaterman(target, sequence, gap_cost, sub_matrix)
-            aligment.print_aligment()
+            aligment = SmithWaterman.SmithWaterman(target
+                                                   , sequence
+                                                   , gap_cost
+                                                   , sub_matrix
+                                                   , minscore)
+            print("\n---Aligment---")
+            print("Model: {0}, chain: {1}".format(model, chain))
+            print("Target length: {0} {1}".format(len(target), target[0:40]))
+            print("Subject length: {0} {1}".format(len(sequence), sequence[0:40]))
+
+            aligment.print_data()
+
+            print("\n---END---")
