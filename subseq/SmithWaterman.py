@@ -126,10 +126,10 @@ class SmithWaterman:
     def print_aligment(self):
         a_len = len(self.aligment_string)
         print("\nIndentities: {0}/{1} ({2:.1%})"
-              .format(self.indentities, a_len, self.indentities / a_len))
+              .format(self.indentities, a_len, self.indentities/a_len))
 
         print("Mismatches: {0}/{1} ({2:.1%})"
-              .format(self.mismatches, a_len, self.mismatches / a_len))
+              .format(self.mismatches, a_len, self.mismatches/a_len))
 
         print("Gaps: {0}/{1} ({2:.1%})"
               .format(self.gaps, a_len, self.gaps / a_len))
