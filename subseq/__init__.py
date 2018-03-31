@@ -4,6 +4,7 @@ import os
 import sys
 import re
 
+
 def __init__(self):
     path = os.path.dirname(__file__)
     sys.path.append(path)
@@ -16,37 +17,41 @@ def __init__(self):
 
 
 def subseq(*_argv, **_kwargs):
-    try:
-        parameters = ParseKwargs.ParseKwargs(_kwargs)
+    # try:
+    #     parameters = ParseKwargs.ParseKwargs(_kwargs)
 
-        data = Data.Data(parameters['models'], parameters['chains'])
+    #     data = Data.Data(parameters['models'], parameters['chains'])
 
-        search_result = None
-        if parameters['algorithm'] == 're':
-            search_result = RegExSearch.subseq_re(parameters['target'], data)
-        elif parameters['algorithm'] == 'la':
-            search_result = LocalAlignSearch.subseq_la(parameters['target'], data, parameters['submatrix'], parameters['gapcost'])
-        
-        if search_result is not None:
-            Select.select(search_result)
-        else:
-            print("Empty")
-    except Exception as e:
-        print(' Error: ' + str(e))
-    # parameters = ParseKwargs.ParseKwargs(_kwargs)
+    #     search_result = None
+    #     if parameters['algorithm'] == 're':
+    #         search_result = RegExSearch.subseq_re(parameters['target'], data)
+    #     elif parameters['algorithm'] == 'la':
+    #         search_result = LocalAlignSearch.subseq_la(parameters['target'], data, parameters['submatrix'], parameters['gapcost'])
 
-    # data = Data.Data(parameters['models'], parameters['chains'])
+    #     if search_result is not None:
+    #         Select.select(search_result)
+    #     else:
+    #         print("Empty")
+    # except Exception as e:
+    #     print(' Error: ' + str(e))
+    parameters = ParseKwargs.ParseKwargs(_kwargs)
 
-    # search_result = None
-    # if parameters['algorithm'] == 're':
-    #     search_result = RegExSearch.subseq_re(parameters['target'], data)
-    # elif parameters['algorithm'] == 'la':
-    #     search_result = LocalAlignSearch.subseq_la(parameters['target'], data, parameters['submatrix'], parameters['gapcost'])
-    
-    # if search_result is not None:
-    #     Select.select(search_result)
-    # else:
-    #     print("Empty")
+    data = Data.Data(parameters['models'], parameters['chains'])
+
+    search_result = None
+    if parameters['algorithm'] == 're':
+        search_result = RegExSearch.subseq_re(parameters['target'], data)
+    elif parameters['algorithm'] == 'la':
+        search_result = LocalAlignSearch.subseq_la(parameters['target']
+                                                   , data
+                                                   , parameters['submatrix']
+                                                   , parameters['gapcost']
+                                                   , parameters['minscore'])
+
+    if search_result is not None:
+        Select.select(search_result)
+    else:
+        print("Empty")
 
 
 cmd.extend('subseq', subseq)
