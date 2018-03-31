@@ -143,7 +143,7 @@ class Data:
         # position number, three letter code, corresponding chain and model
         # to aa_dict['aa_list']
         cmd.iterate("(name ca)",
-                    "aa_list.append([resn, resi, chain, model])",
+                    "aa_list.append([resn, resi, chain.upper(), model.upper()])",
                     space=aa_dict)
 
         return aa_dict
