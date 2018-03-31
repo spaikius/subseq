@@ -9,7 +9,7 @@ ParseKwargs (class):
         raw kwargs (keyword arguments)    
 
     class param attribute keys:
-        algorithm, target, models, chains, gapcost, submatrix
+        algorithm, target, models, chains, gapcost, submatrix, minscore
 
     class attributes:
         - algorithm_types (list): static.
@@ -23,6 +23,9 @@ ParseKwargs (class):
 
         - default_score_matrix (str): static.
             Default score matrix (blossum62)
+
+        - default_minscore (float): static.
+            Default minimum score for local aligment (51.0%)
 
         - parameters (dict): typed.
             Contains all parameters values
@@ -57,6 +60,9 @@ ParseKwargs (class):
         - submatrix_validation (): typed.
             Validates substitution matrix
 
+        - minscore_validation (): typed.
+            Validates minimum score (in percentages) for local aligment
+
 Example:
     ParseKwargs_obj = ParseKwargs(kwargs)
     target_value = ParseKwargs_obj['target']
@@ -76,6 +82,7 @@ class ParseKwargs:
     default_algorithm = algorithm_types[0]
     default_gap_cost = 10
     default_score_matrix = 'blosum62'
+    default_minscore = 51.
 
     def __init__(self, kwargs):
         self.parameters = {
@@ -85,6 +92,7 @@ class ParseKwargs:
             'chains':      None,
             'gapcost':     None,
             'submatrix':   None,
+            'minscore':    None,
         }
 
         self.set_parameters(kwargs)
@@ -100,7 +108,6 @@ class ParseKwargs:
         # Set self.parameters[key] values from kwargs key-value pairs
         for key, value in kwargs.items():
             key = key.lower()
-            value = value.lower()
 
             if key in self.parameters:
                 self.parameters[key] = value
@@ -115,6 +122,7 @@ class ParseKwargs:
         self.chains_validation()
         self.gapcost_validation()
         self.submatrix_validation()
+        self.minscore_validation()
 
     def algorithm_validation(self):
         if self.parameters['algorithm'] is None:
@@ -138,6 +146,7 @@ class ParseKwargs:
             self.parameters['models'] = all_pymol_models
         else:
             models_list = parse_str_to_list(self.parameters['models'])
+            models_list = [model.upper() for model in models_list]
 
             # Check if all models are opened by pymol
             for model in models_list:
@@ -153,6 +162,7 @@ class ParseKwargs:
             self.parameters['chains'] = all_models_chains
         else:
             chains_list = parse_str_to_list(self.parameters['chains'])
+            chains_list = [chain.upper() for chain in chains_list]
             for chain in chains_list:
                 if chain not in all_models_chains:
                     raise Exception("Found unknown chain {}".format(chain))
@@ -181,3 +191,17 @@ class ParseKwargs:
                 raise Exception("File or dir does not exist {}"
                                 .format(os.path.basename(
                                     self.parameters['submatrix'])))
+
+    def minscore_validation(self):
+        if self.parameters['minscore'] is None:
+            self.parameters['minscore'] = self.default_minscore
+        else:
+            try:
+                minscore = float(self.parameters['minscore'])
+                if minscore >= 0 and minscore <= 100:
+                    self.parameters['minscore'] = minscore
+                else:
+                    raise Exception('minscore value must be between 0 and 100')
+
+            except:
+                raise Exception('minscore should be type of int or float')
