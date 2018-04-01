@@ -46,7 +46,8 @@ class SubMatrix:
             matrix[row_name] = dict()
 
             if len(entries) != len(columns):
-                raise Exception('Improper entry number in row')
+                raise Exception('SubMatrix: columns and rows counts does not match\n file: {}'
+                                .format(self.matrix))
             for column_name in columns:
                 matrix[row_name][column_name] = entries.pop(0)
 
