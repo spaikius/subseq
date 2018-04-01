@@ -6,12 +6,39 @@ class SmithWaterman:
         self.sub_matrix = matrix
         self.minscore = minscore
 
+        self.alignment_coordinates = list()
         self.score_matrix = None
 
         self.max_score = self.calc_max_score()
 
         self.create_score_matrix()
-        self.best_score, self.best_score_cord_list = self.fill_matrix()
+        self.best_score, self.best_score_coord_list = self.fill_matrix()
+
+    def get_alignment_coordinates(self):
+        for i, j in self.best_score_coord_list:
+            end, diag, up, left = range(4)
+
+            move = self.next_move(i, j)
+
+            start_coord = None
+            end_coord = j - 1
+
+            while move != end:
+                if move == diag:
+                    i -= 1
+                    j -= 1
+                elif move == up:
+                    i -= 1
+                elif move == left:
+                    j -= 1
+
+                move = self.next_move(i, j)
+
+            start_coord = j - 1
+
+            self.alignment_coordinates.append((start_coord, end_coord))
+
+        return self.alignment_coordinates
 
     def calc_max_score(self):
         best_score = 0
@@ -28,7 +55,7 @@ class SmithWaterman:
 
     def fill_matrix(self):
         best_score = None
-        best_score_cord_list = list()
+        best_score_coord_list = list()
         for i in range(1, len(self.score_matrix)):
             for j in range(1, len(self.score_matrix[i])):
                 score = self.calc_score(i, j)
@@ -41,12 +68,12 @@ class SmithWaterman:
                     continue
 
                 if score == best_score:
-                    best_score_cord_list.append((i, j))
+                    best_score_coord_list.append((i, j))
                 elif score > best_score:
                     best_score = score
-                    best_score_cord_list = [(i, j)]
+                    best_score_coord_list = [(i, j)]
 
-        return best_score, best_score_cord_list
+        return best_score, best_score_coord_list
 
     def calc_score(self, i, j):
         aa1 = self.target[i - 1]
@@ -115,7 +142,7 @@ class SmithWaterman:
         if achieved_score == left - self.gap_cost:
             return 3 if left > 0 else 0
 
-        raise Exception('Failed to find next move during find_traceback in {}'
+        raise Exception('Failed to find next move in {}'
                         .format(__name__))
 
     @staticmethod
@@ -139,7 +166,7 @@ class SmithWaterman:
         return alignment_string, identities, gaps, mismatches
 
     def print_data(self):
-        for i, j in self.best_score_cord_list:
+        for i, j in self.best_score_coord_list:
 
             aligned_seq1, aligned_seq2, seq1_start, seq2_start = \
                 self.find_traceback(i, j)
