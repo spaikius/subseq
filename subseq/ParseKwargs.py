@@ -134,8 +134,7 @@ class ParseKwargs:
 
     def target_validation(self):
         if self.parameters['target'] is None:
-            raise Exception("Parameter 'target=' must be defined"
-                            .format(self.errors['targetValueError']))
+            raise Exception("Parameter 'target=' must be defined")
         else:
             self.parameters['target'] = self.parameters['target'].upper()
 
