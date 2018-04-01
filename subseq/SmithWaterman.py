@@ -195,7 +195,7 @@ class SmithWaterman:
 
         a_len = len(alignment_string)
 
-        print("\nScore: {0}/{1} ({2:.1%})"
+        print("\nScore:      {0}/{1} ({2:.1%})"
               .format(self.best_score, self.max_score, float(self.best_score) / self.max_score))
 
         print("Identities: {0}/{1} ({2:.1%})"
@@ -204,7 +204,7 @@ class SmithWaterman:
         print("Mismatches: {0}/{1} ({2:.1%})"
               .format(mismatches, a_len, float(mismatches) / a_len))
 
-        print("Gaps: {0}/{1} ({2:.1%})"
+        print("Gaps:       {0}/{1} ({2:.1%})"
               .format(gaps, a_len, float(gaps) / a_len))
 
         for i in range(0, a_len, 60):

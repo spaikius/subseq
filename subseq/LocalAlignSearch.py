@@ -36,6 +36,6 @@ def subseq_la(target, data, matrix, gap_cost, minscore):
 
                 aligment.print_data()
 
-                print("\n--- END {0} {1}---".format(model, chain))
+                print("\n--- END {0} {1} ---".format(model, chain))
 
     return match_list if len(match_list) != 0 else None
