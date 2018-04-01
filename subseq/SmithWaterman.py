@@ -1,3 +1,61 @@
+"""Description
+
+This module is designed for local alignment using the Smith-Waterman algorithm.
+Wikipedia link: https://en.wikipedia.org/wiki/Smith-Waterman_algortihm
+
+SmithWaterman (class):
+    Class description:
+        This class performs nucleotide or protein sequence (depending on given 
+        substitution matrix) alignment using the Smith-waterman algorithm
+
+    Class attributes:
+        __init__(target: str, sequence: str, gap_cost: float, matrix: SubMatrix, minscore: float):
+            Constructor. Calls create_score_matrix() and fill_matrix()
+
+        get_alignment_coordinates() -> list:
+            return a list of starting and ending positions of aligned sequences
+
+        calc_max_score() -> int:
+            calculate the best possible alignemnt score for given target
+
+        create_score_matrix():
+            create a 2d matrix amd set all scores to 0
+            
+        fill_matrix():
+            Fill self.score_matrix with scores representing trial alignments of the two sequences
+
+        calc_score(i: int, j: int) -> int:
+            Calculate score for given i and j position in the self.score_matrix
+            The score is based on the upper-left, left and up elements in self.score_matrix
+
+        find_traceback(i: int, j: int) -> str, str, int, int:
+            For the given best score coordinate find the optimal path through the self.score_matrix.
+            Return constructed alignment strings for both sequences and coordinate where alignment begins
+            
+        next_move(i: int, j: int) -> int
+            Looks for the next move during traceback.
+            Moves are determined by the score of three upper-left, left and up 
+            in the self.score_matrix elements
+
+        construct_alignment_string(aligned_seq1: str, aligned_seq2: str) -> str, int, int, int:
+            Construct alignment string for both aligned sequences
+
+            KTGTA
+            :| :|  <-- alignment string
+            PT-KA
+
+            where ':' - mismatch, ' ' - gap, '|' - match
+            return alignment string, match count, mismatch count, gap count
+    
+        print_data():
+            Calls find_traceback(), construct_aligment_string(), print_aligment() for each best
+            acumamulative score in self.score_matrix
+
+        print_alignment():
+            Prints BLAST like alginment for both sequences
+"""
+
+
 class SmithWaterman:
     def __init__(self, target, sequence, gap_cost, matrix, minscore):
         self.target = [i for i in target]
@@ -41,11 +99,11 @@ class SmithWaterman:
         return self.alignment_coordinates
 
     def calc_max_score(self):
-        best_score = 0
+        max_score = 0
         for aa in self.target:
-            best_score += int(self.sub_matrix[aa, aa])
+            max_score += int(self.sub_matrix[aa, aa])
 
-        return best_score
+        return max_score
 
     def create_score_matrix(self):
         rows = len(self.target) + 1
@@ -64,6 +122,7 @@ class SmithWaterman:
 
                 score_in_perc = (float(score) / self.max_score) * 100
 
+                # skip if acummalitve score is lower than minimum score
                 if self.minscore > score_in_perc:
                     continue
 
