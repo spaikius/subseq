@@ -68,7 +68,7 @@ Keyword parameters:
                                       Examples:
                                        If algorithm type is re:
                                         - target=KTGTAVU
-                                        - target=^TATA.{3,5}ATG(.{3,4}){3,}
+                                        - target=(TATA.{3,5}ATG(.{3,4}){3,})
                                        If algorithm type is la:
                                         - target=KTGAT
 

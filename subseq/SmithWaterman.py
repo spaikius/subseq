@@ -1,6 +1,6 @@
 """Description
 
-This module is designed for local alignment using the Smith-Waterman algorithm.
+This module provides a class for optimal local alignment using Smith-Waterman algorithm
 Wikipedia link: https://en.wikipedia.org/wiki/Smith-Waterman_algortihm
 
 SmithWaterman (class):

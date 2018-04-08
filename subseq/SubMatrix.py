@@ -1,26 +1,12 @@
 """Description
-
-This module is designed to get a score from substitution matrix
-
-Module attribute:
-    SubMatrix (class):
-        class attributes:
-            - __init__(matrix_path: str): typed
-                constructor
-                
-            - load_matrix(matrix_path: str): typed
-                loads substitution matrix from given path in matrix_path
-    
-            - __getitem__(key: tuple/str): typed
-                returns value for given key or keys set
-
-        usage:
-            matrix = SubMatrix(path_to_matrix)
-            matrix['A']['L'] 
-            # or  
-            matrix['A', 'L']
-
+This module provides a class for generating substitution martrix from a file
 """
+
+class InvalidMatrixFormatError(Exception):
+    pass
+
+class InvalidPairError(Exception):
+    pass
 
 
 class SubMatrix:
@@ -46,7 +32,7 @@ class SubMatrix:
             matrix[row_name] = dict()
 
             if len(entries) != len(columns):
-                raise Exception('SubMatrix: columns and rows counts does not match\n file: {}'
+                raise InvalidMatrixFormatError('columns and rows counts does not match\n file: {}'
                                 .format(self.matrix))
             for column_name in columns:
                 matrix[row_name][column_name] = entries.pop(0)
@@ -61,6 +47,6 @@ class SubMatrix:
                     x = x[k]
                 return x
             except:
-                 raise Exception("SubMatrix: Bad key {}".format(key))
+                 raise InvalidPairError("Bad key pair: {}".format(key))
         else:
             return self.matrix[key]

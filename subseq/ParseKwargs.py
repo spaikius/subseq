@@ -3,70 +3,6 @@
 This module is designed to parse and validate raw kwargs (keyword arguments)
 from Pymol command line.
     
-ParseKwargs (class):
-    class description:
-        This class is designed to parse and validate
-        raw kwargs (keyword arguments)    
-
-    class param attribute keys:
-        algorithm, target, models, chains, gapcost, submatrix, minscore
-
-    class attributes:
-        - algorithm_types (list): static.
-            All avialable algorithms 
-
-        - default_algorithm (str): static.
-            Default algorithm (re) RegExp
-
-        - default_gap_cost (int): static.
-            Default gap cost (10)
-
-        - default_score_matrix (str): static.
-            Default score matrix (blossum62)
-
-        - default_minscore (float): static.
-            Default minimum score for local aligment (51.0%)
-
-        - parameters (dict): typed.
-            Contains all parameters values
-        
-        - __init__ (kwargs: dict): typed.
-            Constructor
-
-        - __getitem__ (param: str) -> str: typed.
-            Getter. Returns a value for given key from `param` dictionary
-                
-        - set_parameters (kwargs: dict): typed.
-            Set parameters(class attribute) key-value pairs
-
-        - validate_all_parameters (): typed.
-            Calls all *_validation() functions
-
-        - algorithm_validation (): typed.
-            Validates algorithm type
-
-        - target_validation (): typed.
-            Validates target
-
-        - models_validation (): typed.
-            Validates models
-
-        - chains_validation (): typed.
-            Validates chains
-
-        - gapcost_validation (): typed.
-            Validates gap cost
-
-        - submatrix_validation (): typed.
-            Validates substitution matrix
-
-        - minscore_validation (): typed.
-            Validates minimum score (in percentages) for local aligment
-
-Example:
-    ParseKwargs_obj = ParseKwargs(kwargs)
-    target_value = ParseKwargs_obj['target']
-
 """
 
 import os
@@ -81,7 +17,7 @@ class ParseKwargs:
 
     default_algorithm = algorithm_types[0]
     default_gap_cost = 10
-    default_score_matrix = 'blosum62'
+    default_score_matrix = os.path.join(os.path.dirname(__file__), 'blosum62')
     default_minscore = 51.
 
     def __init__(self, kwargs):
@@ -112,7 +48,7 @@ class ParseKwargs:
             if key in self.parameters:
                 self.parameters[key] = value
             else:
-                # If there is no such key in self.parameters, then raise exception
+                # raise exception If there is no such key in self.parameter
                 raise Exception("Unexpected parameter: {}".format(key))
 
     def validate_all_parameters(self):
@@ -125,9 +61,12 @@ class ParseKwargs:
         self.minscore_validation()
 
     def algorithm_validation(self):
+        # If algorithm type is not provided
+        # set algorortihm type to default (Regular Expression)
         if self.parameters['algorithm'] is None:
             self.parameters['algorithm'] = self.default_algorithm
         else:
+            # check if requested algortihmn exists
             if self.parameters['algorithm'] not in self.algorithm_types:
                 raise Exception("Unexpected algorithm type {}"
                                 .format(self.parameters['algorithm']))
@@ -182,10 +121,9 @@ class ParseKwargs:
 
     def submatrix_validation(self):
         if self.parameters['submatrix'] is None:
-            self.parameters['submatrix'] = \
-                os.path.join(os.path.dirname(__file__)
-                             , self.default_score_matrix)
+            self.parameters['submatrix'] = self.default_score_matrix
         else:
+            # Check if file exists.
             if not os.path.isfile(self.parameters['submatrix']):
                 raise Exception("File or dir does not exist {}"
                                 .format(os.path.basename(

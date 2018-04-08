@@ -1,22 +1,18 @@
 """Description
-
 This module is designed to search requested subsequence using Regular Expresion
-
-Module attributes:
-    subseq_re(target: str, data: dict) -> list
-        workflow:
-            1) create a RegExp object from target (function parameter)
-            2) scan data (function parameter) by using RegExp object
-            3) append information about match to match_list
-            4) return match_list if its length is not 0 else return None
-
+This module provides a function for searching 
 """
-
-
 import re
 
 
 def subseq_re(target, data):
+	"""
+	workflow:
+        1) create a RegExp object from target (function parameter)
+        2) scan data (function parameter) by using RegExp object
+        3) append information about match to match_list
+        4) return match_list if its length is not 0 else return None
+	"""
     sequence = 'sequence'
     ids = 'ids'
     match_list = list()
