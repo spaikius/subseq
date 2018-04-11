@@ -2,7 +2,6 @@ from pymol import cmd
 
 import os
 import sys
-import re
 
 
 def __init__(self):
@@ -14,17 +13,23 @@ def __init__(self):
     import RegExSearch
     import LocalAlignSearch
     import Select
+    import Exceptions
 
 
 def subseq(*argv, **kwargs):
+    # If user just typed 'subseq'
+    # kwargs contains `_self` key, so it's length is 1, not 0
     if len(argv) == 0 and len(kwargs) == 1:
-        print(usage_message)
+        print("For help type: subseq help")
         return
 
+    # Print usage manual if user typed `subseq help` 
     if 'help' in argv:
        print(usage_message)
        return
 
+    # Print warrning message if user forgot to seperate kwargs with comma.
+    # Or targets value is not within parentheses if RegExp quantifier `{n,m}` is used
     if len(kwargs) != 1 and len(argv) > 0:
         print(bad_arguments_message)
         return
@@ -47,9 +52,20 @@ def subseq(*argv, **kwargs):
         if search_result is not None:
             Select.select(search_result)
         else:
-            print("Empty")
-    except Exception as e:
-        print(' Error: ' + str(e))
+            print("Nothing can be found for given target: {0}".format(parameters['target']))
+
+    except (  Exceptions.BadParameterError
+            , Exceptions.InvalidPairError
+            , Exceptions.BadRegExSyntaxError
+            , Exceptions.NoModelsError
+            , Exceptions.InvalidMatrixFormatError
+            , Exceptions.InvalidPairError ) as e:
+        print(' [Error] ' + str(e))
+
+    except Exception:
+        # Unknown exception occured.
+        # Reraise exception and let Pymol to handle it. 
+        raise
 
 cmd.extend('subseq', subseq)
 
@@ -58,7 +74,13 @@ Usage: subseq target=<str>, algorithm=<str>, submatrix=<str>, models=<list>
               , chains=<list>, gapcost=<float>, minscore=<float>
 
 Exaple usage: subseq target=KTGT, algorithm=la, chains=[A, B, T], submatrix=PATH/TO/MATRIX
+
+!!! Important !!!
 Please note: each keyword parameter should be seperated with comma (,)
+Please note: target value should be within parentheses if quantifier {n,m} is used in Regular Expressions.
+             Example: target=(GT{3,})
+                             ^      ^
+
 
 Parameters:
     help                            ; Prints usage manual
@@ -88,7 +110,7 @@ Keyword parameters:
                                       performed in all available model chains
                                       Example: chains=[A, T, X, Q]
 
-    submatrix=<str>     Optional    ; Path to substitution matrix for local alignment
+    submatrix=<PATH>    Optional    ; Path to substitution matrix for local alignment
                                       Default substitution matrix: Blossum62
 
     gapcost=<float>     Optional    ; The linear gap cost for local alignment
@@ -101,7 +123,10 @@ Keyword parameters:
 """
 
 bad_arguments_message = """
-Found non seperated keyword arguments.
-Please check if all keyword arguments are seperated with comma (,)
+Found nonseperated keyword arguments or target= value is not within parentheses.
+
+Please check if all keyword arguments are seperated with comma (,) or target= value
+is within parentheses if Regular Expression quantifier is used.
+
 For help type: subseq help
 """

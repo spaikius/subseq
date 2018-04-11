@@ -3,12 +3,13 @@ This module is desgined to extract and access data from pymol.
 """
 from pymol import cmd
 from HelperFunctions import get_chains
+from Exceptions import InvalidPairError
 
 
 class Data:
     """
-    This class creates an empty dictionary and fills it with data
-    from pymol cmd.iterate command.
+    This class is desgined to extract data from pymol cmd.iterate command
+    and makes it accessible through class object.
 
     self.data schema:
     self.data = {   model_name: {
@@ -39,7 +40,6 @@ class Data:
         self.fill_empty_data_dict()
 
     def __getitem__(self, key):
-        # 
         if isinstance(key, tuple):
             try:
                 x = self
@@ -47,7 +47,7 @@ class Data:
                     x = x[k]
                 return x
             except:
-                raise Exception("DATA: bad key {}".format(key))
+                raise InvalidPairError("bad key {}".format(key))
         else:
             return self.data[key]
 

@@ -3,12 +3,7 @@ This module provides a class for generating substitution martrix from a file
 """
 
 import os
-
-class InvalidMatrixFormatError(Exception):
-    pass
-
-class InvalidPairError(Exception):
-    pass
+from Exceptions import InvalidMatrixFormatError, InvalidPairError
 
 
 class SubMatrix:

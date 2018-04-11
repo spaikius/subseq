@@ -1,6 +1,7 @@
 """Description
 
-This module contains only helper functions:
+This module provides some helper functions
+
 get_all_models() -> list 				; return all pymol models
 get_all_chains(models: list) -> list 	; return all chains for given models list
 get_chains(model: str) -> list 			; return all chains for given model
@@ -10,6 +11,8 @@ parse_str_to_list(string: str) -> list 	; parse a string and return a list of va
 
 import re
 from pymol import cmd
+from Exceptions import NoModelsError
+
 
 def get_all_models():
     """ return all oppend pymol models """
@@ -18,7 +21,7 @@ def get_all_models():
 
     # if a list is empty -> no models are currently avialable
     if not bool(models):
-        raise Exception("No models are currently opened")
+        raise NoModelsError("No models are currently opened")
 
     return models
   

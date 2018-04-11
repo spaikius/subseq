@@ -3,61 +3,14 @@
 This module provides a class for optimal local alignment using Smith-Waterman algorithm
 Wikipedia link: https://en.wikipedia.org/wiki/Smith-Waterman_algortihm
 
-SmithWaterman (class):
-    Class description:
-        This class performs nucleotide or protein sequence (depending on given 
-        substitution matrix) alignment using the Smith-waterman algorithm
-
-    Class attributes:
-        __init__(target: str, sequence: str, gap_cost: float, matrix: SubMatrix, minscore: float):
-            Constructor. Calls create_score_matrix() and fill_matrix()
-
-        get_alignment_coordinates() -> list:
-            return a list of starting and ending positions of aligned sequences
-
-        calc_max_score() -> int:
-            calculate the best possible alignemnt score for given target
-
-        create_score_matrix():
-            create a 2d matrix amd set all scores to 0
-            
-        fill_matrix():
-            Fill self.score_matrix with scores representing trial alignments of the two sequences
-
-        calc_score(i: int, j: int) -> int:
-            Calculate score for given i and j position in the self.score_matrix
-            The score is based on the upper-left, left and up elements in self.score_matrix
-
-        find_traceback(i: int, j: int) -> str, str, int, int:
-            For the given best score coordinate find the optimal path through the self.score_matrix.
-            Return constructed alignment strings for both sequences and coordinate where alignment begins
-            
-        next_move(i: int, j: int) -> int
-            Looks for the next move during traceback.
-            Moves are determined by the score of three upper-left, left and up 
-            in the self.score_matrix elements
-
-        construct_alignment_string(aligned_seq1: str, aligned_seq2: str) -> str, int, int, int:
-            Construct alignment string for both aligned sequences
-
-            KTGTA
-            :| :|  <-- alignment string
-            PT-KA
-
-            where ':' - mismatch, ' ' - gap, '|' - match
-            return alignment string, match count, mismatch count, gap count
-    
-        print_data():
-            Calls find_traceback(), construct_aligment_string(), print_aligment() for each best
-            acumamulative score in self.score_matrix
-
-        print_alignment():
-            Prints BLAST like alginment for both sequences
 """
+from Exceptions import InvalidPairError
 
 
 class SmithWaterman:
     """
+    This class performs nucleotide or protein sequence (depending on given 
+    substitution matrix) alignment using the Smith-waterman algorithm
     """
     def __init__(self, target, sequence, gap_cost, sub_matrix):
         self.target = [i for i in target]
@@ -91,7 +44,7 @@ class SmithWaterman:
                     x = x[k]
                 return x
             except:
-                 raise Exception("Bad key pair: {}".format(key))
+                 raise InvalidPairError("Bad key pair: {}".format(key))
         else:
             return self.matrix[key]
 
@@ -102,6 +55,10 @@ class SmithWaterman:
         return self.best_score
 
     def get_traceback(self, i, j):
+        """
+        Finds the optimal path through the self.score_matrix.
+        Returns constructed alignment strings and coordinates where alignment begins
+        """
         aligned_target = list()
         aligned_subject = list()
 
@@ -140,6 +97,11 @@ class SmithWaterman:
         return aligned_target, aligned_subject, i, j
 
     def next_move(self, i, j):
+        """
+        Looks for the next move during traceback.
+        Moves are determined by the score of three upper-left, left and up 
+        in the self.score_matrix elements
+        """
         aa1 = self.target[i - 1]
         aa2 = self.sequence[j - 1]
         achieved_score = self.score_matrix[i][j]
@@ -159,11 +121,11 @@ class SmithWaterman:
             # return left move if left move is greater than 0 else return END
             return 3 if left > 0 else 0
 
-        # This part should not be reachable
-        raise Exception('Failed to find next move in {}'
-                        .format(__name__))
-
     def fill_score_matrix(self):
+        """
+        Fills self.score_matrix with scores representing trial 
+        alignments of the two sequences
+        """
         for i in range(1, len(self.score_matrix)):
             for j in range(1, len(self.score_matrix[i])):
                 score = self.calculate_score(i, j)
@@ -177,6 +139,10 @@ class SmithWaterman:
                     self.best_score_coordinates.append((i, j))
 
     def calculate_score(self, i, j):
+        """
+        Calculates score for given i and j position in the self.score_matrix.
+        The score is based on the upper-left, left and up elements in self.score_matrix
+        """
         aa1 = self.target[i - 1]
         aa2 = self.sequence[j - 1]
 

@@ -1,6 +1,6 @@
 """Description
 
-This module is designed to parse and validate raw kwargs (keyword arguments)
+This module provides a class for parsing and validating raw kwargs (keyword arguments)
 from Pymol command line.
     
 """
@@ -8,6 +8,8 @@ from Pymol command line.
 import os
 
 from HelperFunctions import get_all_models, get_all_chains, parse_str_to_list
+from Exceptions import BadParameterError
+
 
 class ParseKwargs:
     algorithm_types = [
@@ -49,7 +51,7 @@ class ParseKwargs:
                 self.parameters[key] = value
             else:
                 # raise exception If there is no such key in self.parameter
-                raise Exception("Unexpected parameter: {}".format(key))
+                raise BadParameterError("Unexpected parameter: {}".format(key))
 
     def validate_all_parameters(self):
         self.algorithm_validation()
@@ -67,13 +69,13 @@ class ParseKwargs:
         else:
             # check if requested algortihmn exists
             if self.parameters['algorithm'] not in self.algorithm_types:
-                raise Exception("Unexpected algorithm type {}"
+                raise BadParameterError("Unexpected algorithm type: {}"
                                 .format(self.parameters['algorithm']))
 
     def target_validation(self):
         # Raise exception if target is not provided
         if self.parameters['target'] is None:
-            raise Exception("Parameter 'target=' must be defined")
+            raise BadParameterError("Parameter 'target=' must be defined")
         else:
             self.parameters['target'] = self.parameters['target'].upper()
 
@@ -89,7 +91,7 @@ class ParseKwargs:
             # Check if all models exists
             for model in models_list:
                 if model not in all_pymol_models:
-                    raise Exception("Found unknown model {}".format(model))
+                    raise BadParameterError("Found unknown model: {}".format(model))
 
             self.parameters['models'] = models_list   
 
@@ -103,7 +105,7 @@ class ParseKwargs:
             chains_list = [chain.upper() for chain in chains_list]
             for chain in chains_list:
                 if chain not in all_models_chains:
-                    raise Exception("Found unknown chain {}".format(chain))
+                    raise BadParameterError("Found unknown chain: {}".format(chain))
 
             self.parameters['chains'] = chains_list
 
@@ -115,7 +117,7 @@ class ParseKwargs:
                 gap_cost = float(self.parameters['gapcost'])
                 self.parameters['gapcost'] = gap_cost
             except:
-                raise Exception("Gap cost must be \
+                raise BadParameterError("Gap cost must be \
                                 type of int or float. Got {}"
                                 .format(self.parameters['gapcost']))
 
@@ -125,7 +127,7 @@ class ParseKwargs:
         else:
             # Check if file exists.
             if not os.path.isfile(self.parameters['submatrix']):
-                raise Exception("File or dir does not exist {}"
+                raise BadParameterError("File or dir does not exist: {}"
                                 .format(os.path.basename(
                                     self.parameters['submatrix'])))
 
@@ -138,7 +140,7 @@ class ParseKwargs:
                 if minscore >= 0 and minscore <= 100:
                     self.parameters['minscore'] = minscore
                 else:
-                    raise Exception('minscore value must be between 0 and 100')
+                    raise BadParameterError('minscore value must be between 0 and 100')
 
             except:
-                raise Exception('minscore should be type of int or float')
+                raise BadParameterError('minscore should be type of int or float')

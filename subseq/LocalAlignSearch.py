@@ -7,6 +7,9 @@ import SmithWaterman
 
 
 def subseq_la(target, data, matrix, gap_cost, min_score):
+    """
+    
+    """
     sub_matrix = SubMatrix.SubMatrix(matrix)
     max_score = calculate_max_score(target, sub_matrix)
     match_list = list()
@@ -16,15 +19,20 @@ def subseq_la(target, data, matrix, gap_cost, min_score):
             sequence = data[model][chain]['sequence']
             SW = SmithWaterman.SmithWaterman(target, sequence, gap_cost, sub_matrix)
 
+            # Skip if alignment best score is less than minimum passing score
             if (float(SW.get_best_score()) / max_score) * 100 < min_score:
                 continue
 
             for i, j in SW.get_coordinates():
                 aligned_target, aligned_sequence, start_i, start_j = SW.get_traceback(i, j)
 
+                # start_j - 1, because start_j corresponds to index from Smith-Waterman score table
                 start_id = data[model][chain]['ids'][start_j - 1]
 
-                subject_end = len([i for i in aligned_sequence if i != '-']) + start_j - 1                
+                # end = start index + alignment length (without gaps)
+                subject_end = len([i for i in aligned_sequence if i != '-']) + start_j - 1 
+                
+                # subject_end - 1, because list index starts at 0               
                 end_id = data[model][chain]['ids'][subject_end - 1]
 
                 match_list.append((model, chain, start_id, end_id))
@@ -42,6 +50,7 @@ def subseq_la(target, data, matrix, gap_cost, min_score):
 
 
 def calculate_max_score(target, sub_matrix):
+    """ calculate the best possible alignemnt score for given target """
     max_score = 0
     for aa in target:
         max_score += int(sub_matrix[aa, aa])
@@ -50,6 +59,17 @@ def calculate_max_score(target, sub_matrix):
 
 
 def create_alignment_string(aligned_seq1, aligned_seq2):
+    """
+    Constructs alignment string for both aligned sequences
+
+    KTGTA
+    :| :|  <-- alignment string
+    PT-KA
+
+    where ':' - mismatch, ' ' - gap, '|' - match
+    
+    returns alignment string, match count, mismatch count, gap count
+    """
     identities, gaps, mismatches = 0, 0, 0
     alignment_string = ''
 
@@ -73,6 +93,10 @@ def print_alignment(  model, chain, target, sequence, substitution_matrix_name, 
                     , alignment_score, max_score, identities, mismatches, gaps
                     , aligned_target, aligned_sequence, alignment_string
                     , target_start, subject_start, ids_list):
+
+    """
+    Prints BLAST like alginment for both sequences
+    """
 
     a_len = len(aligned_sequence)
 
@@ -112,4 +136,3 @@ def print_alignment(  model, chain, target, sequence, substitution_matrix_name, 
         print("\n")
 
     print('-' * 60)
-# subseq target=HASDFGKSD, algorithm=la, gapcost=1

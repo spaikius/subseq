@@ -3,6 +3,7 @@ This module is designed to search requested subsequence using Regular Expresion
 This module provides a function for searching 
 """
 import re
+from Exceptions import BadRegExSyntaxError
 
 
 def subseq_re(target, data):
@@ -22,7 +23,7 @@ def subseq_re(target, data):
         # re.I - ignore case sensetive
         re_target = re.compile(target, re.I)
     except:
-        raise Exception('Bad syntax - target(RegExp): ' + str(target))
+        raise BadRegExSyntaxError('Bad syntax - target(RegExp): ' + str(target))
 
     # scan data by using RegExp object
     for model in data.keys():
