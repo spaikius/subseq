@@ -851,6 +851,7 @@ Keyword parameters:
                                        If method type is la:
                                         - target=KTGAT
 
+    submatrix=<PATH>    Required    ; Path to substitution matrix for local alignment
 
     method=<str>        Optional    ; Method search type.
                                       - 're' for Regular Expression
@@ -866,8 +867,6 @@ Keyword parameters:
                                       If the list is not priveded, then search for target will be
                                       performed in all available model chains
                                       Example: chains=[A, T, X, Q]
-
-    submatrix=<PATH>    Required    ; Path to substitution matrix for local alignment
 
     gapcost=<float>     Optional    ; The linear gap cost for local alignment
                                       Default value: 10
