@@ -19,7 +19,8 @@ Exaple usage: subseq target=KTGT, method=la, chains=[A, B, T], submatrix=PATH/TO
 Please note: each keyword parameter should be seperated with comma (,)
 ```
 ### Parameters
-````
+```
+Parameters:
     help                            ; Prints usage manual
 
 Keyword parameters:
@@ -27,12 +28,12 @@ Keyword parameters:
                                       Examples:
                                        If method type is re:
                                         - target=KTGTAVU
-                                        - target=^TATA.{3,5}ATG(.{3,4}){3,}
+                                        - target=(TATA.{3,5}ATG(.{3,4}){3,})
                                        If method type is la:
                                         - target=KTGAT
 
 
-    method=<str>     	Optional    ; Method search type.
+    method=<str>        Optional    ; Method search type.
                                       - 're' for Regular Expression
                                       - 'la' for local alignment. Smith-Waterman 
                                       Default value: 're'
@@ -47,7 +48,7 @@ Keyword parameters:
                                       performed in all available model chains
                                       Example: chains=[A, T, X, Q]
 
-    submatrix=<str>     Optional    ; Path to substitution matrix for local alignment
+    submatrix=<PATH>    Optional    ; Path to substitution matrix for local alignment
                                       Default substitution matrix: Blossum62
 
     gapcost=<float>     Optional    ; The linear gap cost for local alignment
