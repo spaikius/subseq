@@ -21,6 +21,14 @@ def subseq_la(target, data, matrix, gap_cost, min_score):
 
             for i, j in SW.get_coordinates():
                 aligned_target, aligned_sequence, start_i, start_j = SW.get_traceback(i, j)
+
+                start_id = data[model][chain]['ids'][start_j - 1]
+
+                subject_end = len([i for i in aligned_sequence if i != '-']) + start_j - 1                
+                end_id = data[model][chain]['ids'][subject_end - 1]
+
+                match_list.append((model, chain, start_id, end_id))
+
                 alignment_string, identities, gaps, mismatches = \
                     create_alignment_string(aligned_target, aligned_sequence)
 
