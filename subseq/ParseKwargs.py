@@ -61,8 +61,7 @@ class ParseKwargs:
         self.minscore_validation()
 
     def algorithm_validation(self):
-        # If algorithm type is not provided
-        # set algorortihm type to default (Regular Expression)
+        # If algorithm is not provided set its value to default (Regular Expression)
         if self.parameters['algorithm'] is None:
             self.parameters['algorithm'] = self.default_algorithm
         else:
@@ -72,6 +71,7 @@ class ParseKwargs:
                                 .format(self.parameters['algorithm']))
 
     def target_validation(self):
+        # Raise exception if target is not provided
         if self.parameters['target'] is None:
             raise Exception("Parameter 'target=' must be defined")
         else:
@@ -86,7 +86,7 @@ class ParseKwargs:
             models_list = parse_str_to_list(self.parameters['models'])
             models_list = [model.upper() for model in models_list]
 
-            # Check if all models are opened by pymol
+            # Check if all models exists
             for model in models_list:
                 if model not in all_pymol_models:
                     raise Exception("Found unknown model {}".format(model))

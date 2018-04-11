@@ -12,7 +12,7 @@ import re
 from pymol import cmd
 
 def get_all_models():
-    """ return all pymol models """
+    """ return all oppend pymol models """
     
     models = [model.upper() for model in cmd.get_names()]
 

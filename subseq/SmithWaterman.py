@@ -57,98 +57,53 @@ SmithWaterman (class):
 
 
 class SmithWaterman:
-    def __init__(self, target, sequence, gap_cost, matrix, minscore):
+    """
+    """
+    def __init__(self, target, sequence, gap_cost, sub_matrix):
         self.target = [i for i in target]
         self.sequence = [i for i in sequence]
         self.gap_cost = gap_cost
-        self.sub_matrix = matrix
-        self.minscore = minscore
+        self.sub_matrix = sub_matrix
 
-        self.alignment_coordinates = list()
-        self.score_matrix = None
+        self.best_score = 0
+        self.best_score_coordinates = list()
+        
+        """
+        Initialize score matrix
+                 S  E  Q  U  E  N  C  E
+            [[0, 0, 0, 0, 0, 0, 0, 0, 0],
+          T  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+          A  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+          R  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+          G  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+          E  [0, 0, 0, 0, 0, 0, 0, 0, 0],
+          T  [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        """
+        self.score_matrix = [[0 for i in range(len(sequence) + 1)] for j in range(len(target) + 1)] 
 
-        self.max_score = self.calc_max_score()
+        self.fill_score_matrix()
 
-        self.create_score_matrix()
-        self.best_score, self.best_score_coord_list = self.fill_matrix()
+    def __getitem__(self, i, j): 
+        if isinstance(key, tuple):
+            try:
+                x = self
+                for k in key:
+                    x = x[k]
+                return x
+            except:
+                 raise Exception("Bad key pair: {}".format(key))
+        else:
+            return self.matrix[key]
 
-    def get_alignment_coordinates(self):
-        for i, j in self.best_score_coord_list:
-            end, diag, up, left = range(4)
+    def get_coordinates(self):
+        return self.best_score_coordinates
 
-            move = self.next_move(i, j)
+    def get_best_score(self):
+        return self.best_score
 
-            start_coord = None
-            end_coord = j - 1
-
-            while move != end:
-                if move == diag:
-                    i -= 1
-                    j -= 1
-                elif move == up:
-                    i -= 1
-                elif move == left:
-                    j -= 1
-
-                move = self.next_move(i, j)
-
-            start_coord = j - 1
-
-            self.alignment_coordinates.append((start_coord, end_coord))
-
-        return self.alignment_coordinates
-
-    def calc_max_score(self):
-        max_score = 0
-        for aa in self.target:
-            max_score += int(self.sub_matrix[aa, aa])
-
-        return max_score
-
-    def create_score_matrix(self):
-        rows = len(self.target) + 1
-        cols = len(self.sequence) + 1
-
-        self.score_matrix = [[0 for col in range(cols)] for row in range(rows)]
-
-    def fill_matrix(self):
-        best_score = None
-        best_score_coord_list = list()
-        for i in range(1, len(self.score_matrix)):
-            for j in range(1, len(self.score_matrix[i])):
-                score = self.calc_score(i, j)
-
-                self.score_matrix[i][j] = score
-
-                score_in_perc = (float(score) / self.max_score) * 100
-
-                # skip if acummalitve score is lower than minimum score
-                if self.minscore > score_in_perc:
-                    continue
-
-                if score == best_score:
-                    best_score_coord_list.append((i, j))
-                elif score > best_score:
-                    best_score = score
-                    best_score_coord_list = [(i, j)]
-
-        return best_score, best_score_coord_list
-
-    def calc_score(self, i, j):
-        aa1 = self.target[i - 1]
-        aa2 = self.sequence[j - 1]
-
-        similarity = self.sub_matrix[aa1, aa2]
-
-        diag_score = self.score_matrix[i - 1][j - 1] + int(similarity)
-        up_score = self.score_matrix[i - 1][j] - self.gap_cost
-        left_score = self.score_matrix[i][j - 1] - self.gap_cost
-
-        return max(0, diag_score, up_score, left_score)
-
-    def find_traceback(self, i, j):
-        aligned_seq1 = list()
-        aligned_seq2 = list()
+    def get_traceback(self, i, j):
+        aligned_target = list()
+        aligned_subject = list()
 
         end, diag, up, left = range(4)
 
@@ -156,33 +111,33 @@ class SmithWaterman:
 
         while move != end:
             if move == diag:
-                aligned_seq1.append(self.target[i - 1])
-                aligned_seq2.append(self.sequence[j - 1])
+                aligned_target.append(self.target[i - 1])
+                aligned_subject.append(self.sequence[j - 1])
 
                 i -= 1
                 j -= 1
 
             elif move == up:
-                aligned_seq1.append(self.target[i - 1])
-                aligned_seq2.append('-')
+                aligned_target.append(self.target[i - 1])
+                aligned_subject.append('-')
 
                 i -= 1
 
             elif move == left:
-                aligned_seq1.append('-')
-                aligned_seq2.append(self.sequence[j - 1])
+                aligned_target.append('-')
+                aligned_subject.append(self.sequence[j - 1])
 
                 j -= 1
 
             move = self.next_move(i, j)
 
-        aligned_seq1.append(self.target[i - 1])
-        aligned_seq2.append(self.sequence[j - 1])
+        aligned_target.append(self.target[i - 1])
+        aligned_subject.append(self.sequence[j - 1])
 
-        aligned_seq1 = ''.join(reversed(aligned_seq1))
-        aligned_seq2 = ''.join(reversed(aligned_seq2))
+        aligned_target = ''.join(reversed(aligned_target))
+        aligned_subject = ''.join(reversed(aligned_subject))
 
-        return aligned_seq1, aligned_seq2, i, j
+        return aligned_target, aligned_subject, i, j
 
     def next_move(self, i, j):
         aa1 = self.target[i - 1]
@@ -193,88 +148,42 @@ class SmithWaterman:
         left = self.score_matrix[i][j - 1]
 
         if achieved_score == diag + int(self.sub_matrix[aa1, aa2]):
+            # return diagnol move if diagnol move is greater than 0 else return END
             return 1 if diag > 0 else 0
 
         if achieved_score == up - self.gap_cost:
+            # return up move if up move is greater than 0 else return END
             return 2 if up > 0 else 0
 
         if achieved_score == left - self.gap_cost:
+            # return left move if left move is greater than 0 else return END
             return 3 if left > 0 else 0
 
+        # This part should not be reachable
         raise Exception('Failed to find next move in {}'
                         .format(__name__))
 
-    @staticmethod
-    def construct_alignment_string(aligned_seq1, aligned_seq2):
-        identities, gaps, mismatches = 0, 0, 0
-        alignment_string = ''
+    def fill_score_matrix(self):
+        for i in range(1, len(self.score_matrix)):
+            for j in range(1, len(self.score_matrix[i])):
+                score = self.calculate_score(i, j)
 
-        for aa1, aa2 in zip(aligned_seq1, aligned_seq2):
-            if aa1 == aa2:
-                alignment_string += '|'
-                identities += 1
+                self.score_matrix[i][j] = score
 
-            elif '-' in (aa1, aa2):
-                alignment_string += ' '
-                gaps += 1
+                if score > self.best_score:
+                    self.best_score = score
+                    self.best_score_coordinates = [(i, j)]
+                elif score == self.best_score:
+                    self.best_score_coordinates.append((i, j))
 
-            else:
-                alignment_string += ':'
-                mismatches += 1
+    def calculate_score(self, i, j):
+        aa1 = self.target[i - 1]
+        aa2 = self.sequence[j - 1]
 
-        return alignment_string, identities, gaps, mismatches
+        similarity = self.sub_matrix[aa1, aa2]
 
-    def print_data(self):
-        for i, j in self.best_score_coord_list:
+        diag_score = self.score_matrix[i - 1][j - 1] + int(similarity)
+        up_score = self.score_matrix[i - 1][j] - self.gap_cost
+        left_score = self.score_matrix[i][j - 1] - self.gap_cost
 
-            aligned_seq1, aligned_seq2, seq1_start, seq2_start = \
-                self.find_traceback(i, j)
-
-            alignment_string, identities, gaps, mismatches = \
-                self.construct_alignment_string(aligned_seq1, aligned_seq2)
-
-            self.print_alignment(aligned_seq1
-                                 , aligned_seq2
-                                 , alignment_string
-                                 , identities
-                                 , gaps
-                                 , mismatches
-                                 , seq1_start
-                                 , seq2_start)
-
-    def print_alignment(self
-                        , aligned_seq1
-                        , aligned_seq2
-                        , alignment_string
-                        , identities
-                        , gaps
-                        , mismatches
-                        , seq1_start
-                        , seq2_start):
-
-        a_len = len(alignment_string)
-
-        print("\nScore:      {0}/{1} ({2:.1%})"
-              .format(self.best_score, self.max_score, float(self.best_score) / self.max_score))
-
-        print("Identities: {0}/{1} ({2:.1%})"
-              .format(identities, a_len, float(identities) / a_len))
-
-        print("Mismatches: {0}/{1} ({2:.1%})"
-              .format(mismatches, a_len, float(mismatches) / a_len))
-
-        print("Gaps:       {0}/{1} ({2:.1%})"
-              .format(gaps, a_len, float(gaps) / a_len))
-
-        for i in range(0, a_len, 60):
-            seq1_slice = aligned_seq1[i: i + 60]
-            seq2_slice = aligned_seq2[i: i + 60]
-            align_slice = alignment_string[i: i + 60]
-            target_start = i + seq1_start
-            subject_start = i + seq2_start
-            target_end = len([i for i in seq1_slice if i != '-']) + target_start - 1
-            subject_end = len([i for i in seq1_slice if i != '-']) + subject_start - 1
-
-            print("Target  {0:<4} {1} {2:<4}".format(target_start, seq1_slice, target_end))
-            print("             {0}".format(align_slice))
-            print("Subject {0:<4} {1} {2:<4}".format(subject_start, seq2_slice, subject_end))
+        return max(0, diag_score, up_score, left_score)

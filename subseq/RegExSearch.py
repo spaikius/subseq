@@ -6,13 +6,13 @@ import re
 
 
 def subseq_re(target, data):
-	"""
-	workflow:
+    """
+    workflow:
         1) create a RegExp object from target (function parameter)
         2) scan data (function parameter) by using RegExp object
         3) append information about match to match_list
         4) return match_list if its length is not 0 else return None
-	"""
+    """
     sequence = 'sequence'
     ids = 'ids'
     match_list = list()

@@ -2,6 +2,8 @@
 This module provides a class for generating substitution martrix from a file
 """
 
+import os
+
 class InvalidMatrixFormatError(Exception):
     pass
 
@@ -12,6 +14,7 @@ class InvalidPairError(Exception):
 class SubMatrix:
     def __init__(self, matrix_path):
         self.matrix = None
+        self.name = os.path.basename(matrix_path)
         self.load_matrix(matrix_path)
 
     def load_matrix(self, matrix_path):
@@ -50,3 +53,6 @@ class SubMatrix:
                  raise InvalidPairError("Bad key pair: {}".format(key))
         else:
             return self.matrix[key]
+
+    def get_name(self):
+        return self.name

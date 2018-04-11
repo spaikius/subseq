@@ -6,7 +6,7 @@ from HelperFunctions import get_chains
 
 
 class Data:
-	"""
+    """
     This class creates an empty dictionary and fills it with data
     from pymol cmd.iterate command.
 
@@ -20,8 +20,8 @@ class Data:
                     },
                     ...
                 }
-	"""
-	# Dictionary to look up the one letter codes
+    """
+    # Dictionary to look up the one letter codes
     one_letter = {
         'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
@@ -52,18 +52,18 @@ class Data:
             return self.data[key]
 
     def keys(self):
-    	"""Returns all self.data top level keys"""
+        """Returns all self.data top level keys"""
         return self.data.keys()
 
     def construct_empty_data_dict(self):
-    	"""
- 		Initializes data structure self.data 
+        """
+        Initializes data structure self.data 
         structure schema:
             model: {chain: {sequence: '', ids: list()}}
             
         model and chain names are in self.models (list) and 
         self.chains (list) respectively
-    	"""
+        """
         empty_dict = dict()
         sequence = 'sequence'
         ids = 'ids'
@@ -89,8 +89,8 @@ class Data:
 
     @staticmethod
     def get_data_from_pymol():
-    	"""
-    	 Extracts data from pymol using `cmd.iterate` command.
+        """
+         Extracts data from pymol using `cmd.iterate` command.
             Returns a dictionary:
                 aa_dict = { 'aa_list': [[resn, resi, chain, model], ...}
                 where
@@ -98,7 +98,7 @@ class Data:
                     resi - 3 letter aa code
                     chain - chain name
                     model - model name
-    	"""
+        """
         aa_dict = dict()
         aa_dict['aa_list'] = list()
 
@@ -112,16 +112,16 @@ class Data:
         return aa_dict
 
     def replace_to_one_letter(self, aa_dict):
-    	"""Replaces all 3 letter aa code to 1 letter aa code"""
+        """Replaces all 3 letter aa code to 1 letter aa code"""
         for aa_list in aa_dict['aa_list']:
             aa_list[0] = self.one_letter[aa_list[0]]
 
     def fill_data(self, aa_dict):
-    	"""
+        """
         Initializes self.data[model][chain] keys:
-    		- sequence: aa chain sequence
-    		- ids: list of ids
-    	"""
+            - sequence: aa chain sequence
+            - ids: list of ids
+        """
         sequence = 'sequence'
         ids = 'ids'
 
@@ -134,9 +134,9 @@ class Data:
             self.data[model][chain][ids].append(resi)
 
     def filter_data(self):
-    	"""Remove all blank attributes in self.data dictionary"""
+        """Remove all blank attributes in self.data dictionary"""
         for model in self.data.keys():
-        	# remove all empty models and warn if found any
+            # remove all empty models and warn if found any
             if not self.data[model]:
                 print(" Warning: model {} does not contain any of these chains:\n{}"
                       .format(model, self.chains))
