@@ -40,9 +40,9 @@ def subseq(*argv, **kwargs):
         data = Data.Data(parameters['models'], parameters['chains'])
 
         search_result = None
-        if parameters['algorithm'] == 're':
+        if parameters['method'] == 're':
             search_result = RegExSearch.subseq_re(parameters['target'], data)
-        elif parameters['algorithm'] == 'la':
+        elif parameters['method'] == 'la':
             search_result = LocalAlignSearch.subseq_la(parameters['target']
                                                        , data
                                                        , parameters['submatrix']
@@ -70,10 +70,10 @@ def subseq(*argv, **kwargs):
 cmd.extend('subseq', subseq)
 
 usage_message = """
-Usage: subseq target=<str>, algorithm=<str>, submatrix=<str>, models=<list>
+Usage: subseq target=<str>, method=<str>, submatrix=<str>, models=<list>
               , chains=<list>, gapcost=<float>, minscore=<float>
 
-Exaple usage: subseq target=KTGT, algorithm=la, chains=[A, B, T], submatrix=PATH/TO/MATRIX
+Exaple usage: subseq target=KTGT, method=la, chains=[A, B, T], submatrix=PATH/TO/MATRIX
 
 !!! Important !!!
 Please note: each keyword parameter should be seperated with comma (,)
@@ -88,14 +88,14 @@ Parameters:
 Keyword parameters:
     target=<str>        Required    ; Target sequence
                                       Examples:
-                                       If algorithm type is re:
+                                       If method type is re:
                                         - target=KTGTAVU
                                         - target=(TATA.{3,5}ATG(.{3,4}){3,})
-                                       If algorithm type is la:
+                                       If method type is la:
                                         - target=KTGAT
 
 
-    algorithm=<str>     Optional    ; Algorithm search type.
+    method=<str>        Optional    ; Method search type.
                                       - 're' for Regular Expression
                                       - 'la' for local alignment. Smith-Waterman 
                                       Default value: 're'

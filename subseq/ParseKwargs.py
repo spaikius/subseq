@@ -12,19 +12,19 @@ from Exceptions import BadParameterError
 
 
 class ParseKwargs:
-    algorithm_types = [
+    method_types = [
         're',  # Regular Expression (default)
         'la'   # Local alignment
     ]
 
-    default_algorithm = algorithm_types[0]
+    default_method = method_types[0]
     default_gap_cost = 10
     default_score_matrix = os.path.join(os.path.dirname(__file__), 'blosum62')
     default_minscore = 51.
 
     def __init__(self, kwargs):
         self.parameters = {
-            'algorithm':   None,
+            'method':   None,
             'target':      None,
             'models':      None,
             'chains':      None,
@@ -54,7 +54,7 @@ class ParseKwargs:
                 raise BadParameterError("Unexpected parameter: {}".format(key))
 
     def validate_all_parameters(self):
-        self.algorithm_validation()
+        self.method_validation()
         self.target_validation()
         self.models_validation()
         self.chains_validation()
@@ -62,15 +62,15 @@ class ParseKwargs:
         self.submatrix_validation()
         self.minscore_validation()
 
-    def algorithm_validation(self):
-        # If algorithm is not provided set its value to default (Regular Expression)
-        if self.parameters['algorithm'] is None:
-            self.parameters['algorithm'] = self.default_algorithm
+    def method_validation(self):
+        # If method is not provided set its value to default (Regular Expression)
+        if self.parameters['method'] is None:
+            self.parameters['method'] = self.default_method
         else:
             # check if requested algortihmn exists
-            if self.parameters['algorithm'] not in self.algorithm_types:
-                raise BadParameterError("Unexpected algorithm type: {}"
-                                .format(self.parameters['algorithm']))
+            if self.parameters['method'] not in self.method_types:
+                raise BadParameterError("Unexpected method type: {}"
+                                .format(self.parameters['method']))
 
     def target_validation(self):
         # Raise exception if target is not provided
