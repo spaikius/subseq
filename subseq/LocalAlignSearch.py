@@ -72,7 +72,7 @@ def create_alignment_string(aligned_seq1, aligned_seq2):
 def print_alignment(  model, chain, target, sequence, substitution_matrix_name, gap_cost
                     , alignment_score, max_score, identities, mismatches, gaps
                     , aligned_target, aligned_sequence, alignment_string
-                    , target_start, sequence_start, ids_list):
+                    , target_start, subject_start, ids_list):
 
     a_len = len(aligned_sequence)
 
@@ -97,18 +97,19 @@ def print_alignment(  model, chain, target, sequence, substitution_matrix_name, 
 
     for i in range(0, a_len, 60):
         target_slice = aligned_target[i: i + 60]
-        sequence_slice = aligned_sequence[i: i + 60]
+        subject_slice = aligned_sequence[i: i + 60]
         alignment_slice = alignment_string[i: i + 60]
 
         target_start = i + target_start
-        subject_start = i + int(ids_list[sequence_start - 1])
+        subject_start = i + int(ids_list[subject_start - 1])
 
         target_end = len([i for i in target_slice if i != '-']) + target_start - 1
-        subject_end = len([i for i in target_slice if i != '-']) + subject_start - 1
+        subject_end = len([i for i in subject_slice if i != '-']) + subject_start - 1
 
         print("Target  {0:<4} {1} {2}".format(target_start, target_slice, target_end))
         print(' ' * 13 + "{0}".format(alignment_slice))
-        print("Subject {0:<4} {1} {2}".format(subject_start, sequence_slice, subject_end))
+        print("Subject {0:<4} {1} {2}".format(subject_start, subject_slice, subject_end))
         print("\n")
 
     print('-' * 60)
+# subseq target=HASDFGKSD, algorithm=la, gapcost=1
