@@ -883,7 +883,7 @@ Found nonseperated keyword arguments or target= value is not within parentheses.
 Please check if all keyword arguments are seperated with comma (,) or target= value
 is within parentheses if Regular Expression quantifier is used.
 
-For help type: subseq help
+For help type: subseq help 
 """
 # END OF PRINT MESSAGES
 # -----------------------------------------------------------------------------
