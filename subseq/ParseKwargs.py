@@ -115,11 +115,13 @@ class ParseKwargs:
         else:
             try:
                 gap_cost = float(self.parameters['gapcost'])
+                if gap_cost < 0.1:
+                    raise BadParameterError("Gap cost can not be less than 0.1")
                 self.parameters['gapcost'] = gap_cost
             except:
-                raise BadParameterError("Gap cost must be \
-                                type of int or float. Got {}"
-                                .format(self.parameters['gapcost']))
+                raise BadParameterError("Gap cost must be"
+                                + "type of int or float. Got {}"
+                                  .format(self.parameters['gapcost']))
 
     def submatrix_validation(self):
         if self.parameters['submatrix'] is None:
