@@ -27,10 +27,10 @@ def subseq_re(target='', chains='all', search_for='aminoAcids', first_only='Fals
 
     # Print manual if target value is [-h, --h, -he, --he, -hel, --hel, -help, --help]
     if re.match(r'^-{1,2}h(?:elp|el|e|)$', target, re.I):
-        print('help')
+        print(subseq_re_usage_message)
         return
 
-    data = Data(models, chains, search_for)
+    data = Data(models, chains, search_for, 'X')
     search_results = None
     try:
         search_results = subseq_re_search(target.upper(), data, first_only, search_for)
@@ -46,17 +46,17 @@ def subseq_re(target='', chains='all', search_for='aminoAcids', first_only='Fals
 def subseq_la(target='', sub_matrix='', chains='all', search_for='aminoacids', first_only='False', gap_cost='10',
               min_score='51', models='all'):
     try:
-        models, chains, search_for, first_only = check_parameters(target, chains, search_for, first_only, models, 
+        models, chains, search_for, first_only = check_parameters(target, chains, search_for, first_only, models,
                                                                   sub_matrix, gap_cost, min_score)
     except BadParameterError:
         print("[Info]  Errors were found. Please see above messages for more information")
         return
 
     if re.match(r'^-{1,2}h(?:elp|el|e|)$', target, re.I):
-        print('help')
+        print(subseq_la_usage_message)
         return
 
-    data = Data(models, chains, search_for)
+    data = Data(models, chains, search_for, '*')
 
     try:
         search_results = subseq_la_search(target, data, sub_matrix, gap_cost, min_score, first_only)
@@ -107,11 +107,12 @@ class Data:
         'G': 'G', 'A': 'A', 'T': 'T', 'C': 'C', 'U': 'U'
     }
 
-    def __init__(self, models, chains, search_for):
+    def __init__(self, models, chains, search_for, replace_with):
         self.data = None
         self.models = models
         self.chains = chains
         self.search_for = search_for.lower()
+        self.replace_with = replace_with
 
         self.construct_data_dict()
         self.fill_empty_data_dict()
@@ -202,7 +203,7 @@ class Data:
             try:
                 main_atoms[0] = self.aa_one_letter[main_atoms[0]]
             except KeyError:
-                main_atoms[0] = 'X'
+                main_atoms[0] = self.replace_with
 
     def replace_to_na_one_letter(self, atoms_dict):
         """Replaces all DNA or RNA nucleic acid code to 1 letter aa code"""
@@ -210,7 +211,7 @@ class Data:
             try:
                 main_atoms[0] = self.na_one_letter[main_atoms[0]]
             except KeyError:
-                main_atoms[0] = 'X'
+                main_atoms[0] = self.replace_with
 
     def fill_data(self, atoms_dict):
         """
@@ -244,7 +245,7 @@ class Data:
 # -----------------------------------------------------------------------------
 # REGULAR EXPRESSION SEARCH
 
-def subseq_re_search(target, data, firstOnly, search_for):
+def subseq_re_search(target, data, first_only, search_for):
     """
     work flow:
         1) create a RegExp object from target (function parameter)
@@ -253,6 +254,8 @@ def subseq_re_search(target, data, firstOnly, search_for):
         4) return match_list if its length is not 0 else return None
     """
     match_list = list()
+
+    target = target.strip("'`()\"")
 
     # Replace wildcards
     if search_for == 'nucleicacids':
@@ -287,7 +290,7 @@ def subseq_re_search(target, data, firstOnly, search_for):
 
                     start_pos += 1
 
-                if firstOnly:
+                if first_only:
                     break
             else:
                 continue
@@ -330,11 +333,11 @@ def subseq_la_search(target, data, matrix, gap_cost, min_score, first_only):
                 alignment_string, identities, gaps, mismatches = \
                     create_alignment_string(aligned_target, aligned_sequence)
 
-                print_alignment(model, chain, target, sequence, sub_matrix.get_name(), gap_cost
-                                , sw.get_best_score(), max_score, identities, mismatches, gaps
-                                , aligned_target, aligned_sequence, alignment_string
-                                , start_i, start_j, data[model][chain]['ids'])
-                
+                print_alignment(model, chain, target, sequence, sub_matrix.get_name(), gap_cost,
+                                sw.get_best_score(), max_score, identities, mismatches, gaps,
+                                aligned_target, aligned_sequence, alignment_string,
+                                start_i, start_j, data[model][chain]['ids'])
+
                 if first_only:
                     break
             else:
@@ -384,10 +387,10 @@ def create_alignment_string(aligned_seq1, aligned_seq2):
     return alignment_string, identities, gaps, mismatches
 
 
-def print_alignment(model, chain, target, sequence, substitution_matrix_name, gap_cost
-                    , alignment_score, max_score, identities, mismatches, gaps
-                    , aligned_target, aligned_sequence, alignment_string
-                    , target_start, subject_start, ids_list):
+def print_alignment(model, chain, target, sequence, substitution_matrix_name, gap_cost,
+                    alignment_score, max_score, identities, mismatches, gaps,
+                    aligned_target, aligned_sequence, alignment_string,
+                    target_start, subject_start, ids_list):
     """
     Prints BLAST like alignment for both sequences
     """
@@ -648,7 +651,8 @@ class SubMatrix:
 
 def select(select_list, method, target):
     # select ID
-    select_id = 'ss_' + str(method) + '_' + str(stored.selection_id) + '_' + str(target[:8])
+    target = re.sub(r'[^\w]', '', target)
+    select_id = 'ss_' + str(method) + '_' + str(stored.selection_id) + '-' + target[:8]
     stored.selection_id += 1
     # empty select
     cmd.select(select_id, None)
@@ -674,7 +678,6 @@ def check_parameters(target, chains, search_for, first_only, models, sub_matrix=
     errors_found = False  # False - No errors were found, True - Errors were found
 
     all_models = cmd.get_names()
-    # all_chains = get_all_chains(all_models)
     all_chains = list()
 
     for model in all_models:
@@ -753,16 +756,6 @@ def check_parameters(target, chains, search_for, first_only, models, sub_matrix=
     return models, chains, search_for, first_only
 
 
-def get_all_chains(model):
-    """ return a list of chains from specific model """
-
-    chain_list = list()
-    for chain in cmd.get_chains(model):
-        chain_list.append(chain.upper())
-
-    return chain_list
-
-
 def parse_str_to_list(string):
     """ Parse a string and return a list of values """
 
@@ -774,5 +767,85 @@ def parse_str_to_list(string):
 
     return raw_str.split(',')
 
+
 # END OF HELPER FUNCTIONS
 # -----------------------------------------------------------------------------
+
+
+# PRINT MESSAGES
+subseq_re_usage_message = """
+Usage: subseq.re target=<str>, chains=<list>, search_for=<str>, first_only=<bool>, models=<list>
+
+Example usage: subseq KTGT, [A, B, C], first_only=True, search_for=nucleicAcids
+
+!!! Important !!!
+All modified amino or nucleic acids are replaced with: X
+
+Parameters:
+    --help                          ; Print user manual
+
+    target=<str>        Required    ; Target sequence
+                                      Examples:
+                                        - target=KTGTAVU
+                                        - target="TATA.{3,5}ATG(.{3,4}){3,}"
+
+    chains=<list>       Optional    ; The list of chains that will be used for target search.
+                                      Example: chains=[A, T, X, Q]
+                                      Default: all
+
+    search_for=<str>    Optional    ; Search for nucleic acids or amino acids sequence
+                                        - [aminoAcids, amino, aa] for amino acids
+                                        - [nucleicAcids, nucleic, na] for nucleic acids
+                                      Default value: aminoAcids
+
+    first_only=<bool>   Optional    ; If first_only is False (0) then select all found subsequences
+                                      If first_only is True (1) then select only first match
+                                      Default: False
+
+    models=<list>       Optional    ; The list of models that will be used for target search.
+                                      Example: models=[5ara, 2cif, a4s2]
+                                      Default: all
+"""
+
+subseq_la_usage_message = """
+Usage: subseq.re target=<str>, sub_matrix=<PATH>, chains=<list>, search_for=<str>, first_only=<bool>,
+                 gap_cost=<float>, min_score=<float>, models=<list>
+
+Example usage: subseq KTGT, PATH/TO/Substitution_matrix, all, nucleicAcids, gap_cost=7.5
+
+!!! Important !!!
+All modified amino or nucleic acids are replaced with: *
+
+Parameters:
+    --help                          ; Print user manual
+
+    target=<str>        Required    ; Target sequence
+
+    sub_matrix=<PATH>   Required    ; Path to substitution matrix for local alignment
+
+    chains=<list>       Optional    ; The list of chains that will be used for target search.
+                                      Example: chains=[A, T, X, Q]
+                                      Default: all
+
+    search_for=<str>    Optional    ; Search for nucleic acids or amino acids sequence
+                                        - [aminoAcids, amino, aa] for amino acids
+                                        - [nucleicAcids, nucleic, na] for nucleic acids
+                                      Default value: aminoAcids
+
+    first_only=<bool>   Optional    ; If first_only is False (0) then select all found subsequences
+                                      If first_only is True (1) then select only first match
+                                      Default: False
+
+    gap_cost=<float>    Optional    ; The linear gap cost for local alignment
+                                      Default value: 10
+
+    min_score=<float>   Optional    ; The minimum score in precentages for throwing off low score alignments
+                                      in local alignment search.
+                                      Example: minscore=75.25
+                                      Default value: 51.00 ( 51% )
+
+    models=<list>       Optional    ; The list of models that will be used for target search.
+                                      Example: models=[5ara, 2cif, a4s2]
+                                      Default: all
+"""
+# END OF PRINT MESSAGES
