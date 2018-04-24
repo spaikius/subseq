@@ -255,7 +255,7 @@ def subseq_re_search(target, data, first_only, search_for):
     """
     match_list = list()
 
-    target = target.strip("'`()\"")
+    target = target.strip("'()\"")
 
     # Replace wildcards
     if search_for == 'nucleicacids':
@@ -779,7 +779,13 @@ Usage: subseq.re target=<str>, chains=<list>, search_for=<str>, first_only=<bool
 Example usage: subseq KTGT, [A, B, C], first_only=True, search_for=nucleicAcids
 
 !!! Important !!!
-All modified amino or nucleic acids are replaced with: X
+Please note: All modified amino or nucleic acids are replaced with: X
+Please note: target value should be within parentheses (...), single or double quatation marks
+             if quantifier {n,m} is used in Regular Expressions.
+             
+             Example: target=    (GT{3,})   or  'GT{3,}'   or  "GT{3,}"
+                                 ^      ^       ^      ^       ^      ^
+
 
 Parameters:
     --help                          ; Print user manual
