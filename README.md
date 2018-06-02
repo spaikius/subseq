@@ -16,6 +16,6 @@ Type run PATH/TO/subseq.py in Pymol console
 
 ## Help
 ```
-For RegExp search type: subseq.re --help
-For Local alignment search type: subseq.la --help
+For RegExp search type: help subseq
+For Local alignment search type: help subseq.local
 ```
