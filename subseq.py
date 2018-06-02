@@ -1,99 +1,364 @@
-from pymol import cmd, stored
 import re
 import os
+import logging
+import string
+
+from pymol import cmd, stored
+
+__author__ = "Rimvydas Noreika"
+__credits__ = ["Justas Dapkūnas"]
+__version__ = "1.0.1"
+__status__ = "Development"
 
 
-class BadParameterError(Exception):
-    """ Bad Parameter Exception """
-    pass
+def subseq_re(
+        targets='', chains='all', search='aminoAcids', firstonly='False',
+        models='all', sele='ss-{method}-{id}-{target}'):
+    """
+DESCRIPTION
+    subseq - tool for searching target sequences using Regular Expressions
 
+USAGE
+    subseq targets=<list|FILE>, chains=<list>, search=<str>, 
+           firstonly=<bool>,    models=<list>, sele=<str>
 
-class BadRegExSyntaxError(Exception):
-    """ Regular Expresion syntax Exception """
-    pass
+    Example usage: subseq KTGT, [A, B, C], firstonly=True, search=nucleicAcids
 
+IMPORTANT
+    All modified amino or nucleic acids are replaced with: X
 
-class InvalidMatrixFormatError(Exception):
-    """ Invalid substitution matrix Exception """
-    pass
+    If quantifier {n,m} is used in Regular Expressions then target value should
+    be within parentheses, single or double quatation marks
+             
+    Example: target= (GT{3,})   or  'GT{3,}'   or  "GT{3,}"
+                     ^      ^       ^      ^       ^      ^
+PARAMETERS
+    targets=<list|FILE>     ; Target sequence
+                              Examples:
+                                - targets=KTGTAVU
+                                - targets="TATA.{3,5}ATG(.{3,4}){3,}"
+                                - targets=[SIS, KATK, "AK{3,4}"]
+                                - targets=PATH/TO/TARGETS_FILE
+    
+    chains=<list>           ; The list of chains 
+                              Examples: 
+                                - chains=A
+                                - chains=[A, AT, X, Q]
+                              Default: all
+    
+    search=<str>            ; Search for nucleic acids or amino acids sequence
+                                - for amino acids: aminoAcids, amino, aa
+                                - for nucleic acids: nucleicAcids, nucleic, na
+                              Default value: aminoAcids
 
+    firstonly=<bool>        ; If firstonly is False (0) then select all matches
+                              If firstonly is True  (1) then select first match
+                              Default: False
 
-def subseq_re(target='', chains='all', search_for='aminoAcids', first_only='False', models='all'):
-    try:
-        models, chains, search_for, first_only = check_parameters(target, chains, search_for, first_only, models)
-    except BadParameterError:
-        print("[Info]  Errors were found. Please see above messages for more information")
+    models=<list>           ; The list of models
+                              Examples:
+                                - models=5ara
+                                - models=[5ara, 2cif, a4s2]
+                              Default: all
+
+    sele=<str>              ; Selection name
+                              Tokens:
+                                - {method} - used method for sequence search
+                                - {target} - first 10 targets alphabet letters
+                                - {id}     - id
+                              Default: 'ss-{method}-{id}-{target}'
+
+SEE ALSO
+    subseq.local, subseq.global
+
+SUBSEQ                          2018-06-01
+    """
+    
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+    logging.error = CallCounter(logging.error)
+
+    targets = parse_targets(targets)
+    chains = parse_chains(chains)
+    search = parse_search(search)
+    firstonly = parse_firstonly(firstonly)
+    models = parse_models(models)
+
+    if logging.error.counter is not 0:
+        logging.info("{0} errors were found. ".format(logging.error.counter) 
+            + "Please see above messages for more information")
+
         return
+        
 
-    # Print manual if target value is [-h, --h, -he, --he, -hel, --hel, -help, --help]
-    if re.match(r'^-{1,2}h(?:elp|el|e|)$', target, re.I):
-        print(subseq_re_usage_message)
-        return
-
-    data = Data(models, chains, search_for, 'X')
+    data = Data(models, chains, search, replace_with='X')
+    
     search_results = None
-    try:
-        search_results = subseq_re_search(target.upper(), data, first_only, search_for)
-    except BadRegExSyntaxError as msg:
-        print("[Error] {0}".format(str(msg)))
 
-    if search_results is not None:
-        select(search_results, method='re', target=target)
+    for target in targets:
+        try:
+            search_results = subseq_re_search(target, data, firstonly, search)
+
+        except Exception as e:
+            logging.warning("RegExp for {0}: {1}".format(target, e))
+            continue
+
+        if search_results is not None:
+            select(search_results, target, sele, method='re')
+
+        else:
+            logging.info("Nothing can be found for given target: {0}"
+                .format(target))
+
+
+def subseq_local_alignment(
+        targets='', submatrix='blossum62', chains='all', search='aminoacids', 
+        firstonly='False', gapcost='10', minscore='51', models='all',
+        sele='ss-{method}-{id}-{target}'):
+    """
+DESCRIPTION
+    subseq.local - tool for searching target sequences using local alignment
+
+USAGE
+    subseq.local targets=<list|FILE>, submatrix=<FILE> chains=<list>,
+                 search=<str>, firstonly=<bool>, gapcost=<float>,
+                 minscore=<float>, models=<list>, sele=<str>
+
+    Example usage: subseq.local KTGT, blossum62, firstonly=True, gapcost=12.5
+
+IMPORTANT
+    All modified amino or nucleic acids are replaced with: X
+
+PARAMETERS
+    targets=<list|FILE>     ; Target sequence
+                              Examples:
+                                - targets=KTGTAVU
+                                - targets="TATA.{3,5}ATG(.{3,4}){3,}"
+                                - targets=[SIS, KATK, "AK{3,4}"]
+                                - targets=PATH/TO/TARGETS_FILE
+    
+    submatrix=<FILE>        ; Path to substitution matrix file
+                              Default: blossum62
+
+    chains=<list>           ; The list of chains 
+                              Examples: 
+                                - chains=A
+                                - chains=[A, AT, X, Q]
+                              Default: all
+    
+    search=<str>            ; Search for nucleic acids or amino acids sequence
+                                - for amino acids: aminoAcids, amino, aa
+                                - for nucleic acids: nucleicAcids, nucleic, na
+                              Default value: aminoAcids
+
+    firstonly=<bool>        ; If firstonly is False (0) then select all matches
+                              If firstonly is True  (1) then select first match
+                              Default: False
+
+    gapcost=<float>         ; The linear gap cost for local alignment
+                              Default value: 10
+
+    minscore=<float>        ; The minimum score in precentages for throwing off
+                              low score alignments in alignment search
+                              Example: minscore=75.25
+                              Default value: 51.00 ( 51% ) 
+
+    models=<list>           ; The list of models
+                              Examples:
+                                - models=5ara
+                                - models=[5ara, 2cif, a4s2]
+                              Default: all
+
+    sele=<str>              ; Selection name
+                              Tokens:
+                                - {method} - used method for sequence search
+                                - {target} - first 10 targets alphabet letters
+                                - {id}     - id
+                              Default: 'ss-{method}-{id}-{target}'
+
+SEE ALSO
+    subseq, subseq.global
+
+SUBSEQ                          2018-06-01
+    """
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+    logging.error = CallCounter(logging.error)
+
+    targets = parse_targets(targets)
+    chains = parse_chains(chains)
+    search = parse_search(search)
+    firstonly = parse_firstonly(firstonly)
+    gapcost = parse_gapcost(gapcost)
+    minscore = parse_minscore(minscore)
+    models = parse_models(models)
+
+    if logging.error.counter is not 0:
+        logging.info("{0} errors were found. ".format(logging.error.counter) 
+            + "Please see above messages for more information")
+
+        return
+    
+    if search is 'nucleicacids' and submatrix is 'blossum62':
+        submatrix = 'nucleicmatrix'
+
+    data = Data(models, chains, search, replace_with='X')
+
+    for target in targets:
+        try:
+            search_results = subseq_la_search(target, data, submatrix, 
+                                          gapcost, minscore, firstonly)
+        except Exception as e:
+            logging.error("{0}".format(e))
+            continue
+
+        if search_results is not None:
+            select(search_results, target, sele, method='local')
+
+        else:
+            logging.info("Nothing can be found for given target: {0}"
+                .format(target))
+
+
+def subseq_global_alignment():
+    """UNDER DEVELOPMENT"""
+    pass
+
+cmd.extend('subseq', subseq_re)
+cmd.extend('subseq.local', subseq_local_alignment)
+cmd.extend('subseq.global', subseq_global_alignment)
+stored.id = 0
+
+class CallCounter:
+    """Decorator to determine number of calls for a method"""
+
+    def __init__(self, method):
+        self.method = method
+        self.counter = 0
+
+    def __call__(self, *args, **kwargs):
+        self.counter += 1
+        return self.method(*args, **kwargs)
+
+
+def parse_targets(targets):
+   
+    if targets is '':
+        logging.error("parameter 'targets' is not specified.")
+        return
+
+    if os.path.isfile(targets):
+        with open(targets) as targets_file:
+            targets = targets_file.readlines()
+
+        targets = [ target.strip() for target in targets
+                        # Skip comments 
+                        if not target.startswith('#') 
+                  ] 
     else:
-        print("[Info] Nothing can be found for given target: {0}".format(target))
+        targets = parse_str_to_list(targets)
+
+    return targets
 
 
-def subseq_la(target='', sub_matrix='', chains='all', search_for='aminoacids', first_only='False', gap_cost='10',
-              min_score='51', models='all'):
-    try:
-        models, chains, search_for, first_only = check_parameters(target, chains, search_for, first_only, models,
-                                                                  sub_matrix, gap_cost, min_score)
-    except BadParameterError:
-        print("[Info]  Errors were found. Please see above messages for more information")
-        return
+def parse_models(models):
+    all_models = cmd.get_names('objects')
 
-    if re.match(r'^-{1,2}h(?:elp|el|e|)$', target, re.I):
-        print(subseq_la_usage_message)
-        return
-
-    data = Data(models, chains, search_for, '*')
-
-    try:
-        search_results = subseq_la_search(target, data, sub_matrix, gap_cost, min_score, first_only)
-    except KeyError as msg:
-        print("[Error] {0}".format(str(msg)))
-        return
-
-    if search_results is not None:
-        select(search_results, method='la', target=target)
+    if models.lower() == 'all':
+        models = all_models
     else:
-        print("[Info] Nothing can be found for given target: {0}".format(target))
+        models = parse_str_to_list(models)
+
+        for model in models:
+            if model not in all_models:
+                logging.error("model '{0}' does not exist.".format(model))
+
+    return models
 
 
-cmd.extend('subseq.re', subseq_re)
-cmd.extend('subseq.la', subseq_la)
-stored.selection_id = 1
+def parse_chains(chains):
+    
+    all_models = cmd.get_names('objects')
+    all_chains = list()
+
+    for model in all_models:
+        all_chains.extend(cmd.get_chains(model))
+
+    all_chains = list(set(all_chains))
+
+    if chains.lower() == 'all':
+        chains = all_chains
+
+    else:        
+
+        chains = [ chain.upper() for chain in parse_str_to_list(chains) ]
+
+        for chain in chains:
+            if chain not in all_chains:
+                logging.error("chain '{0}' does not exist.".format(chain))
+
+    return chains
 
 
-# -----------------------------------------------------------------------------
-# CLASS DATA
+def parse_search(search):
+    
+    if re.match(r'(?:aa|amino|aminoacid)s?', search, re.I):
+        search = "aminoacids"
+    elif re.match(r'(?:na|nucleic|nucleicacid)s?', search, re.I):
+        search = "nucleicacids"
+    else:
+        logging.error("parameter 'search' is invalid")
+
+    return search
+
+
+def parse_firstonly(firstonly):
+
+    if re.match(r'(?:true|t|1)', firstonly, re.I):
+        firstonly = True
+    elif re.match(r'(?:false|f|0)', firstonly, re.I):
+        firstonly = False
+    else:
+        logging.error("parameter 'firstonly' is not a valid boolean value")        
+
+    return firstonly
+
+
+def parse_gapcost(gapcost):
+    try:
+        float(gapcost)
+    except ValueError:
+        logging.error("parameter 'gapcost' is not a valid flaot value")
+
+    return float(gapcost)
+
+
+def parse_minscore(minscore):
+    try:
+        if float(minscore) > 100 or float(minscore) < 0:
+            logging.error("minscore value is not in range of 0 and 100")
+    except ValueError:
+        logging.error("parameter 'minscore' is not a valid int value")
+
+    return float(minscore)
+
 
 class Data:
     """
-    This class is designed to extract data from pymol cmd.iterate command
+    This class is designed to extract data from pymol using cmd.iterate command
     and makes it accessible through class object.
 
     self.data schema:
-    self.data = {   model_name: {
-                        chain_name:{
+    self.data = {
+                    model: {
+                        chain:{
                             sequence: str
-                            ids: [...]
+                            ids: list
                         },
                         ...
                     },
                     ...
                 }
     """
+    
     # Dictionary to look up the one letter codes
     aa_one_letter = {
         'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
@@ -135,12 +400,9 @@ class Data:
 
     def construct_data_dict(self):
         """
-        Initializes data structure self.data
+        Initializes data structure self.data_dict
         structure schema:
-            model: {chain: {sequence: '', ids: list()}}
-
-        model and chain names are in self.models (list) and
-        self.chains (list) respectively
+            model: {chain: {sequence: string, ids: list}}
         """
         data_dict = dict()
 
@@ -167,7 +429,7 @@ class Data:
             self.replace_to_na_one_letter(atoms_dict)
 
         self.fill_data(atoms_dict)
-        self.filter_data()
+        # self.filter_data()
 
     def get_data_from_pymol(self):
         """
@@ -227,29 +489,12 @@ class Data:
             self.data[model][chain]['sequence'] += resn
             self.data[model][chain]['ids'].append(resi)
 
-    def filter_data(self):
-        """Remove all blank attributes in self.data dictionary"""
-        for model in self.data.keys():
-            for chain in self.data[model].keys():
-                # remove chain if sequence is empty
-                if not self.data[model][chain]['sequence']:
-                    del self.data[model][chain]
-                # remove model if does not contain any chain
-                if not self.data[model]:
-                    del self.data[model]
-
-
-# END OF CLASS DATA
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# REGULAR EXPRESSION SEARCH
 
 def subseq_re_search(target, data, first_only, search_for):
     """
     work flow:
-        1) create a RegExp object from target (function parameter)
-        2) scan data (function parameter) by using RegExp object
+        1) create a RegExp object
+        2) scan data by using RegExp object
         3) append information about match to match_list
         4) return match_list if its length is not 0 else return None
     """
@@ -274,15 +519,15 @@ def subseq_re_search(target, data, first_only, search_for):
     try:
         # re.I - ignore case sensitive
         re_target = re.compile(target, re.I)
-    except:
-        raise BadRegExSyntaxError('Bad syntax - target(RegExp): ' + str(target))
+    except Exception:
+        raise
 
     # scan data by using RegExp object
     for model in data.keys():
         for chain in data[model].keys():
             for match in re_target.finditer(data[model][chain]['sequence']):
-
                 start_pos = match.start()
+
                 for _ in range(0, len(match.group())):
                     resi = data[model][chain]['ids'][start_pos]
 
@@ -296,19 +541,18 @@ def subseq_re_search(target, data, first_only, search_for):
                 continue
             break
 
-    # return match list if its length is not 0 else return None
-    return match_list if len(match_list) != 0 else None
+    return match_list if len(match_list) else None
 
-
-# END OF REGULAR EXPRESSION SEARCH
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# LOCAL ALIGNMENT
 
 def subseq_la_search(target, data, matrix, gap_cost, min_score, first_only):
+    """
+    """
+    # Substitution matrix
     sub_matrix = SubMatrix(matrix)
+    
+    # The maximum score for given target
     max_score = calculate_max_score(target, sub_matrix)
+    
     match_list = list()
 
     for model in data.keys():
@@ -317,14 +561,16 @@ def subseq_la_search(target, data, matrix, gap_cost, min_score, first_only):
             sw = SmithWaterman(target, sequence, gap_cost, sub_matrix)
 
             # Skip if alignment best score is less than minimum passing score
-            # print SW.get_best_score(), max_score, min_score
-            if (float(sw.get_best_score()) / max_score) * 100 < float(min_score):
+            if float(sw.get_best_score()) / max_score * 100 < min_score:
                 continue
 
             for i, j in sw.get_coordinates():
-                aligned_target, aligned_sequence, start_i, start_j = sw.get_traceback(i, j)
+
+                aligned_target, aligned_sequence, start_i, start_j =\
+                    sw.get_traceback(i, j)
 
                 start_pos = start_j - 1
+                
                 for _ in range(0, len(aligned_sequence.replace('-', ''))):
                     resi = data[model][chain]['ids'][start_pos]
                     match_list.append((model, chain, resi))
@@ -333,10 +579,12 @@ def subseq_la_search(target, data, matrix, gap_cost, min_score, first_only):
                 alignment_string, identities, gaps, mismatches = \
                     create_alignment_string(aligned_target, aligned_sequence)
 
-                print_alignment(model, chain, target, sequence, sub_matrix.get_name(), gap_cost,
-                                sw.get_best_score(), max_score, identities, mismatches, gaps,
-                                aligned_target, aligned_sequence, alignment_string,
-                                start_i, start_j, data[model][chain]['ids'])
+                print_alignment(
+                    model, chain, target, sequence, sub_matrix.get_name(),
+                    gap_cost, sw.get_best_score(), max_score, identities,
+                    mismatches, gaps, aligned_target, aligned_sequence,
+                    alignment_string, start_i, start_j,
+                    data[model][chain]['ids'])
 
                 if first_only:
                     break
@@ -387,13 +635,12 @@ def create_alignment_string(aligned_seq1, aligned_seq2):
     return alignment_string, identities, gaps, mismatches
 
 
-def print_alignment(model, chain, target, sequence, substitution_matrix_name, gap_cost,
-                    alignment_score, max_score, identities, mismatches, gaps,
-                    aligned_target, aligned_sequence, alignment_string,
-                    target_start, subject_start, ids_list):
-    """
-    Prints BLAST like alignment for both sequences
-    """
+def print_alignment(
+        model, chain, target, sequence, substitution_matrix_name, gap_cost,
+        alignment_score, max_score, identities, mismatches, gaps,
+        aligned_target, aligned_sequence, alignment_string,
+        target_start, subject_start, ids_list):
+    """Prints BLAST like alignment"""
 
     a_len = len(aligned_sequence)
 
@@ -405,7 +652,8 @@ def print_alignment(model, chain, target, sequence, substitution_matrix_name, ga
     print("Gap cost: {0}".format(gap_cost))
     print("\n")
     print("Alignment score: {0}/{1} ({2:.1%})"
-          .format(alignment_score, max_score, float(alignment_score) / max_score))
+          .format(alignment_score, max_score, 
+            float(alignment_score) / max_score))
 
     print("Identities: {0}/{1} ({2:.1%})"
           .format(identities, a_len, float(identities) / a_len))
@@ -414,7 +662,7 @@ def print_alignment(model, chain, target, sequence, substitution_matrix_name, ga
           .format(mismatches, a_len, float(mismatches) / a_len))
 
     print("Gaps:       {0}/{1} ({2:.1%})"
-          .format(gaps, a_len, float(gaps) / a_len))
+          .format(gaps, a_len, gaps / a_len))
 
     for i in range(0, a_len, 60):
         target_slice = aligned_target[i: i + 60]
@@ -424,22 +672,24 @@ def print_alignment(model, chain, target, sequence, substitution_matrix_name, ga
         target_start = i + target_start
         subject_start = i + int(ids_list[subject_start - 1])
 
-        target_end = len([i for i in target_slice if i != '-']) + target_start - 1
-        subject_end = len([i for i in subject_slice if i != '-']) + subject_start - 1
+        target_end = len([i for i in target_slice if i != '-']) \
+                     + target_start - 1
+        
+        subject_end = len([i for i in subject_slice if i != '-']) \
+                     + subject_start - 1
 
-        print("Target  {0:<4} {1} {2}".format(target_start, target_slice, target_end))
+        print("Target  {0:<4} {1} {2}"
+            .format(target_start, target_slice, target_end))
+        
         print(' ' * 13 + "{0}".format(alignment_slice))
-        print("Subject {0:<4} {1} {2}".format(subject_start, subject_slice, subject_end))
+        
+        print("Subject {0:<4} {1} {2}"
+            .format(subject_start, subject_slice, subject_end))
+        
         print("\n")
 
     print('-' * 60)
 
-
-# END OF LOCAL ALIGNMENT
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# CLASS SmithWaterman
 
 class SmithWaterman:
     """
@@ -456,7 +706,7 @@ class SmithWaterman:
         self.best_score = 0
         self.best_score_coordinates = list()
 
-        """
+        '''
         Initialize score matrix
                  S  E  Q  U  E  N  C  E
             [[0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -466,8 +716,9 @@ class SmithWaterman:
           G  [0, 0, 0, 0, 0, 0, 0, 0, 0],
           E  [0, 0, 0, 0, 0, 0, 0, 0, 0],
           T  [0, 0, 0, 0, 0, 0, 0, 0, 0]]
-        """
-        self.score_matrix = [[0 for _ in range(len(sequence) + 1)] for _ in range(len(target) + 1)]
+        '''
+        self.score_matrix = [[0 for _ in range(len(sequence) + 1)] \
+                                for _ in range(len(target) + 1)]
 
         self.fill_score_matrix()
 
@@ -484,15 +735,19 @@ class SmithWaterman:
             return self.score_matrix[key]
 
     def get_coordinates(self):
+        """Retruns a list of tuples (i, j) 
+        where i and j are coordinates of the best score
+        """
         return self.best_score_coordinates
 
     def get_best_score(self):
+        """Returns the best score"""
         return self.best_score
 
     def get_traceback(self, i, j):
-        """
-        Finds the optimal path through the self.score_matrix.
-        Returns constructed alignment strings and coordinates where alignment begins
+        """Finds the optimal path through the score matrix.
+        Returns constructed alignment strings for target and subject and
+        values of i, j where alignment begins
         """
         aligned_target = list()
         aligned_subject = list()
@@ -532,10 +787,9 @@ class SmithWaterman:
         return aligned_target, aligned_subject, i, j
 
     def next_move(self, i, j):
-        """
-        Looks for the next move during traceback.
+        """Looks for the next move during traceback.
         Moves are determined by the score of three upper-left, left and up
-        in the self.score_matrix elements
+        in the score matrix
         """
         aa1 = self.target[i - 1]
         aa2 = self.sequence[j - 1]
@@ -545,22 +799,22 @@ class SmithWaterman:
         left = self.score_matrix[i][j - 1]
 
         if achieved_score == diagonal + int(self.sub_matrix[aa1, aa2]):
-            # return diagonal move if diagonal move is greater than 0 else return END
+            # return diagonal move or END
             return 1 if diagonal > 0 else 0
 
         if achieved_score == up - self.gap_cost:
-            # return up move if up move is greater than 0 else return END
+            # return up move or END
             return 2 if up > 0 else 0
 
         if achieved_score == left - self.gap_cost:
-            # return left move if left move is greater than 0 else return END
+            # return left move or END
             return 3 if left > 0 else 0
 
     def fill_score_matrix(self):
+        """Fills self.score_matrix with scores representing trial alignments
+        of the two sequences
         """
-        Fills self.score_matrix with scores representing trial
-        alignments of the two sequences
-        """
+
         for i in range(1, len(self.score_matrix)):
             for j in range(1, len(self.score_matrix[i])):
                 score = self.calculate_score(i, j)
@@ -574,9 +828,8 @@ class SmithWaterman:
                     self.best_score_coordinates.append((i, j))
 
     def calculate_score(self, i, j):
-        """
-        Calculates score for given i and j position in the self.score_matrix.
-        The score is based on the upper-left, left and up elements in self.score_matrix
+        """Calculates score for given i and j position in the score matrix
+        The score is based on the upper-left, left and up elements
         """
         aa1 = self.target[i - 1]
         aa2 = self.sequence[j - 1]
@@ -590,25 +843,30 @@ class SmithWaterman:
         return max(0, diagonal_score, up_score, left_score)
 
 
-# END OF CLASS SmithWaterman
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# CLASS SubMatrix
-
 class SubMatrix:
+    """
+
+    """
+
     def __init__(self, matrix_path):
         self.matrix = None
-        self.name = os.path.basename(matrix_path)
+        self.name = matrix_path
         self.load_matrix(matrix_path)
 
     def load_matrix(self, matrix_path):
-        with open(matrix_path, 'r') as fh:
-            matrix = fh.read()
+        """Loads substitution matrix"""
+        try:
+            with open(matrix_path, 'r') as fh:
+                matrix = fh.read()
+        except Exception:
+            matrix = self.matrices(matrix_path)
+
+            if matrix is None:
+                raise
 
         lines = matrix.strip().split('\n')
         # remove comments
-        lines = [line for line in lines if line[0] != '#']
+        lines = [line for line in lines if not line.startswith('#') ]
 
         header = lines.pop(0)
         columns = header.split()
@@ -620,8 +878,9 @@ class SubMatrix:
             matrix[row_name] = dict()
 
             if len(entries) != len(columns):
-                raise InvalidMatrixFormatError('columns and rows counts does not match\n file: {}'
-                                               .format(self.matrix))
+                raise Exception('columns and rows counts does not match\n',
+                                'file: {}'.format(self.matrix_path))
+
             for column_name in columns:
                 matrix[row_name][column_name] = entries.pop(0)
 
@@ -635,27 +894,74 @@ class SubMatrix:
                     x = x[k]
                 return x
             except:
-                raise KeyError("Bad key pair in substitution matrix: {}".format(key))
+                raise KeyError('Bad key pair in substitution matrix: {}'
+                               .format(key))
         else:
             return self.matrix[key]
 
     def get_name(self):
+        """Returns substitution matrix path"""
         return self.name
 
+    @staticmethod
+    def matrices(matrix_name):
+        """Default stored matrices"""
+        if matrix_name == 'blossum62':
+            return '''
+   A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X  *
+A  4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4 
+R -1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4 
+N -2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4 
+D -2 -2  1  6 -3  0  2 -1 -1 -3 -4 -1 -3 -3 -1  0 -1 -4 -3 -3  4  1 -1 -4 
+C  0 -3 -3 -3  9 -3 -4 -3 -3 -1 -1 -3 -1 -2 -3 -1 -1 -2 -2 -1 -3 -3 -2 -4 
+Q -1  1  0  0 -3  5  2 -2  0 -3 -2  1  0 -3 -1  0 -1 -2 -1 -2  0  3 -1 -4 
+E -1  0  0  2 -4  2  5 -2  0 -3 -3  1 -2 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4 
+G  0 -2  0 -1 -3 -2 -2  6 -2 -4 -4 -2 -3 -3 -2  0 -2 -2 -3 -3 -1 -2 -1 -4 
+H -2  0  1 -1 -3  0  0 -2  8 -3 -3 -1 -2 -1 -2 -1 -2 -2  2 -3  0  0 -1 -4 
+I -1 -3 -3 -3 -1 -3 -3 -4 -3  4  2 -3  1  0 -3 -2 -1 -3 -1  3 -3 -3 -1 -4 
+L -1 -2 -3 -4 -1 -2 -3 -4 -3  2  4 -2  2  0 -3 -2 -1 -2 -1  1 -4 -3 -1 -4 
+K -1  2  0 -1 -3  1  1 -2 -1 -3 -2  5 -1 -3 -1  0 -1 -3 -2 -2  0  1 -1 -4 
+M -1 -1 -2 -3 -1  0 -2 -3 -2  1  2 -1  5  0 -2 -1 -1 -1 -1  1 -3 -1 -1 -4 
+F -2 -3 -3 -3 -2 -3 -3 -3 -1  0  0 -3  0  6 -4 -2 -2  1  3 -1 -3 -3 -1 -4 
+P -1 -2 -2 -1 -3 -1 -1 -2 -2 -3 -3 -1 -2 -4  7 -1 -1 -4 -3 -2 -2 -1 -2 -4 
+S  1 -1  1  0 -1  0  0  0 -1 -2 -2  0 -1 -2 -1  4  1 -3 -2 -2  0  0  0 -4 
+T  0 -1  0 -1 -1 -1 -1 -2 -2 -1 -1 -1 -1 -2 -1  1  5 -2 -2  0 -1 -1  0 -4 
+W -3 -3 -4 -4 -2 -2 -3 -2 -2 -3 -2 -3 -1  1 -4 -3 -2 11  2 -3 -4 -3 -2 -4 
+Y -2 -2 -2 -3 -2 -1 -2 -3  2 -1 -1 -2 -1  3 -3 -2 -2  2  7 -1 -3 -2 -1 -4 
+V  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4 -3 -2 -1 -4 
+B -2 -1  3  4 -3  0  1 -1  0 -3 -4  0 -3 -3 -2  0 -1 -4 -3 -3  4  1 -1 -4 
+Z -1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4 
+X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4 
+* -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1 
+            '''
 
-# END OF CLASS SubMatrix
-# -----------------------------------------------------------------------------
+        if matrix_name == 'nucleicmatrix':
+            return '''
+   A  C  G  T  U  X
+A  2 -1 -1 -1 -1 -1
+C -1  2 -1 -1 -1 -1
+G -1 -1  2 -1 -1 -1
+T -1 -1 -1  2 -1 -1
+U -1 -1 -1 -1  2 -1
+X -1 -1 -1 -1 -1  1
+            '''
 
-# -----------------------------------------------------------------------------
-# SELECT
+        return None
 
-def select(select_list, method, target):
-    # select ID
-    target = re.sub(r'[^\w]', '', target)
-    select_id = 'ss_' + str(method) + '_' + str(stored.selection_id) + '-' + target[:8]
-    stored.selection_id += 1
+
+
+def select(select_list, target, sele, method):
+    """Creates pymol selection object"""
+
+
+    select_name = string.Formatter().vformat(sele, (), 
+        SafeDict(
+            method=method,
+            target=re.sub(r'[^\w]', '', target)[:10],
+            id=new_id(sele)))
+    
     # empty select
-    cmd.select(select_id, None)
+    cmd.select(select_name, None)
 
     for select_tuple in select_list:
         model = select_tuple[0]
@@ -666,192 +972,29 @@ def select(select_list, method, target):
         select_query = " | /{0}//{1}/{2}".format(model, chain, resi)
 
         # Execute and append selection to select_id
-        cmd.select(select_id, select_id + select_query)
+        cmd.select(select_name, select_name + select_query)
 
 
-# END OF SELECT
-# -----------------------------------------------------------------------------
+def new_id(sele):
+    """Returns an incremented id if id token is requested"""
+    if re.search(r'{id}', sele):
+        stored.id += 1
+    
+    return stored.id
 
-# -----------------------------------------------------------------------------
-# HELPER FUNCTIONS
-def check_parameters(target, chains, search_for, first_only, models, sub_matrix=None, gap_cost=None, min_score=None):
-    errors_found = False  # False - No errors were found, True - Errors were found
 
-    all_models = cmd.get_names()
-    all_chains = list()
-
-    for model in all_models:
-        for chain in cmd.get_chains(model):
-            all_chains.append(chain)
-
-    # Remove all duplicates
-    all_chains = list(set(all_chains))
-
-    if target == '':
-        print("[Error] parameter 'target' is not specified.")
-        errors_found = True
-
-    if models.lower() == 'all':
-        models = all_models
-    else:
-        models = parse_str_to_list(models)
-
-    if chains.lower() == 'all':
-        chains = all_chains
-    else:
-        chains = [chain.upper() for chain in parse_str_to_list(chains)]
-
-    for model in models:
-        if model not in all_models:
-            print("[Error] Model '{0}' does not exist.".format(model))
-            errors_found = True
-
-    for chain in chains:
-        if chain not in all_chains:
-            print("[Error] Chain '{0}' does not exist in any provided models".format(chain))
-            errors_found = True
-
-    if first_only in ['True', 'true', '1']:
-        first_only = True
-    elif first_only in ['False', 'false', '0']:
-        first_only = False
-    else:
-        print("[Error] The 'firstOnly' parameter was not True, 1, False or 0.")
-        errors_found = True
-
-    if search_for.lower() in ['aminoacids', 'amino', 'aa']:
-        search_for = 'aminoacids'
-    elif search_for.lower() in ['nucleicacids', 'nucleic', 'na']:
-        search_for = 'nucleicacids'
-    else:
-        print("[Error] The 'searchFor' parameter was not aminoAcid, amino, aa or nucleicAcid, nucleic, na")
-        errors_found = True
-
-    if sub_matrix:
-        if sub_matrix == '':
-            print("[Error] no substitution matrix provided")
-            errors_found = True
-        elif not os.path.isfile(sub_matrix):
-            print("[Error] file '{0}' does not exist.".format(os.path.basename(sub_matrix)))
-            errors_found = True
-
-    if gap_cost:
-        try:
-            float(gap_cost)
-        except TypeError:
-            print("Gap cost must be type of int or float. Got {}".format(gap_cost))
-            errors_found = True
-
-    if min_score:
-        try:
-            if float(min_score) < 0 or float(min_score) > 100:
-                print('minScore value must be between 0 and 100')
-
-        except TypeError:
-            print('minScore should be type of int or float')
-
-    if errors_found:
-        raise BadParameterError
-
-    return models, chains, search_for, first_only
+class SafeDict(dict):
+    def __missing__(self, key):
+        return key
 
 
 def parse_str_to_list(string):
     """ Parse a string and return a list of values """
 
-    # split by any separator (, . / etc.) excluding all letters, numbers and _
+    # split by any separator , . / etc. excluding all letters, numbers and _
     raw_str = re.sub('([A-Za-z0-9_]+)', r'\1', string)
 
     # remove symbols '[', ']', ''', '"', white space
     raw_str = re.sub('[\[\]\'\"\s]', '', raw_str)
 
     return raw_str.split(',')
-
-
-# END OF HELPER FUNCTIONS
-# -----------------------------------------------------------------------------
-
-
-# PRINT MESSAGES
-subseq_re_usage_message = """
-Usage: subseq.re target=<str>, chains=<list>, search_for=<str>, first_only=<bool>, models=<list>
-
-Example usage: subseq KTGT, [A, B, C], first_only=True, search_for=nucleicAcids
-
-!!! Important !!!
-Please note: All modified amino or nucleic acids are replaced with: X
-Please note: target value should be within parentheses (...), single or double quatation marks
-             if quantifier {n,m} is used in Regular Expressions.
-             
-             Example: target=    (GT{3,})   or  'GT{3,}'   or  "GT{3,}"
-                                 ^      ^       ^      ^       ^      ^
-
-
-Parameters:
-    --help                          ; Print user manual
-
-    target=<str>        Required    ; Target sequence
-                                      Examples:
-                                        - target=KTGTAVU
-                                        - target="TATA.{3,5}ATG(.{3,4}){3,}"
-
-    chains=<list>       Optional    ; The list of chains that will be used for target search.
-                                      Example: chains=[A, T, X, Q]
-                                      Default: all
-
-    search_for=<str>    Optional    ; Search for nucleic acids or amino acids sequence
-                                        - [aminoAcids, amino, aa] for amino acids
-                                        - [nucleicAcids, nucleic, na] for nucleic acids
-                                      Default value: aminoAcids
-
-    first_only=<bool>   Optional    ; If first_only is False (0) then select all found subsequences
-                                      If first_only is True (1) then select only first match
-                                      Default: False
-
-    models=<list>       Optional    ; The list of models that will be used for target search.
-                                      Example: models=[5ara, 2cif, a4s2]
-                                      Default: all
-"""
-
-subseq_la_usage_message = """
-Usage: subseq.re target=<str>, sub_matrix=<PATH>, chains=<list>, search_for=<str>, first_only=<bool>,
-                 gap_cost=<float>, min_score=<float>, models=<list>
-
-Example usage: subseq KTGT, PATH/TO/Substitution_matrix, all, nucleicAcids, gap_cost=7.5
-
-!!! Important !!!
-All modified amino or nucleic acids are replaced with: *
-
-Parameters:
-    --help                          ; Print user manual
-
-    target=<str>        Required    ; Target sequence
-
-    sub_matrix=<PATH>   Required    ; Path to substitution matrix for local alignment
-
-    chains=<list>       Optional    ; The list of chains that will be used for target search.
-                                      Example: chains=[A, T, X, Q]
-                                      Default: all
-
-    search_for=<str>    Optional    ; Search for nucleic acids or amino acids sequence
-                                        - [aminoAcids, amino, aa] for amino acids
-                                        - [nucleicAcids, nucleic, na] for nucleic acids
-                                      Default value: aminoAcids
-
-    first_only=<bool>   Optional    ; If first_only is False (0) then select all found subsequences
-                                      If first_only is True (1) then select only first match
-                                      Default: False
-
-    gap_cost=<float>    Optional    ; The linear gap cost for local alignment
-                                      Default value: 10
-
-    min_score=<float>   Optional    ; The minimum score in precentages for throwing off low score alignments
-                                      in local alignment search.
-                                      Example: minscore=75.25
-                                      Default value: 51.00 ( 51% )
-
-    models=<list>       Optional    ; The list of models that will be used for target search.
-                                      Example: models=[5ara, 2cif, a4s2]
-                                      Default: all
-"""
-# END OF PRINT MESSAGES
