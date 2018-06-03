@@ -19,37 +19,34 @@ DESCRIPTION
     subseq - tool for searching target sequences using Regular Expressions
 
 USAGE
-    subseq targets=<list|FILE>, chains=<list>, search=<str>, 
-           firstonly=<bool>,    models=<list>, sele=<str>
-
-    Example usage: subseq KTGT, [A, B, C], firstonly=True, search=nucleicAcids
-
+    subseq targets, [chains, [search, [firstonly, [models, [sele]]]]]
+    
 IMPORTANT
     All modified amino or nucleic acids are replaced with: X
 
     If quantifier {n,m} is used in Regular Expressions then target value should
-    be within parentheses, single or double quatation marks
+    be within parentheses
              
-    Example: target= (GT{3,})   or  'GT{3,}'   or  "GT{3,}"
-                     ^      ^       ^      ^       ^      ^
+                    targets= (GT{3,}A{,4}(L|G){2,10})
+                             ^~~~~~~~~~~~~~~~~~~~~~~^
 PARAMETERS
     targets=<list|FILE>     ; Target sequence
                               Examples:
                                 - targets=KTGTAVU
-                                - targets="TATA.{3,5}ATG(.{3,4}){3,}"
-                                - targets=[SIS, KATK, "AK{3,4}"]
+                                - targets=(TATA.{3,5}ATG(.{3,4}){3,})
+                                - targets=SIS KATK (AK{3,4})
                                 - targets=PATH/TO/TARGETS_FILE
     
     chains=<list>           ; The list of chains 
                               Examples: 
                                 - chains=A
-                                - chains=[A, AT, X, Q]
+                                - chains=A AT X Q
                               Default: all
     
     search=<str>            ; Search for nucleic acids or amino acids sequence
-                                - for amino acids: aminoAcids, amino, aa
-                                - for nucleic acids: nucleicAcids, nucleic, na
-                              Default value: aminoAcids
+                                - for amino acids: aminoacids, amino, aa
+                                - for nucleic acids: nucleicacids, nucleic, na
+                              Default value: aminoacids
 
     firstonly=<bool>        ; If firstonly is False (0) then select all matches
                               If firstonly is True  (1) then select first match
@@ -58,7 +55,7 @@ PARAMETERS
     models=<list>           ; The list of models
                               Examples:
                                 - models=5ara
-                                - models=[5ara, 2cif, a4s2]
+                                - models=5ara 2cif a4s2
                               Default: all
 
     sele=<str>              ; Selection name
@@ -67,6 +64,9 @@ PARAMETERS
                                 - {target} - first 10 targets alphabet letters
                                 - {id}     - id
                               Default: 'ss-{method}-{id}-{target}'
+
+EXAMPLE
+    subseq KTGT (KT{2,4}), A B C, firstonly=True, search=nucleicacids
 
 SEE ALSO
     subseq.local, subseq.global
@@ -112,18 +112,15 @@ SUBSEQ                          2018-06-01
 
 def subseq_local_alignment(
         targets='', submatrix='blossum62', chains='all', search='aminoacids', 
-        firstonly='False', gapcost='10', minscore='51', models='all',
+        firstonly='False', gapcost='10.', minscore='51.', models='all',
         sele='ss-{method}-{id}-{target}'):
     """
 DESCRIPTION
     subseq.local - tool for searching target sequences using local alignment
 
 USAGE
-    subseq.local targets=<list|FILE>, submatrix=<FILE> chains=<list>,
-                 search=<str>, firstonly=<bool>, gapcost=<float>,
-                 minscore=<float>, models=<list>, sele=<str>
-
-    Example usage: subseq.local KTGT, blossum62, firstonly=True, gapcost=12.5
+    subseq.local targets, [submatrix, [chains, [search, [firstonly, [gapcost,
+                 minscore, [models, [sele]]]]]]]
 
 IMPORTANT
     All modified amino or nucleic acids are replaced with: X
@@ -132,8 +129,7 @@ PARAMETERS
     targets=<list|FILE>     ; Target sequence
                               Examples:
                                 - targets=KTGTAVU
-                                - targets="TATA.{3,5}ATG(.{3,4}){3,}"
-                                - targets=[SIS, KATK, "AK{3,4}"]
+                                - targets=SIS KATK AK
                                 - targets=PATH/TO/TARGETS_FILE
     
     submatrix=<FILE>        ; Path to substitution matrix file
@@ -142,7 +138,7 @@ PARAMETERS
     chains=<list>           ; The list of chains 
                               Examples: 
                                 - chains=A
-                                - chains=[A, AT, X, Q]
+                                - chains=A AT X Q
                               Default: all
     
     search=<str>            ; Search for nucleic acids or amino acids sequence
@@ -155,7 +151,7 @@ PARAMETERS
                               Default: False
 
     gapcost=<float>         ; The linear gap cost for local alignment
-                              Default value: 10
+                              Default value: 10.00
 
     minscore=<float>        ; The minimum score in precentages for throwing off
                               low score alignments in alignment search
@@ -171,9 +167,12 @@ PARAMETERS
     sele=<str>              ; Selection name
                               Tokens:
                                 - {method} - used method for sequence search
-                                - {target} - first 10 targets alphabet letters
+                                - {target} - first 10 alpha-numeric symbols
                                 - {id}     - id
                               Default: 'ss-{method}-{id}-{target}'
+
+EXAMPLE
+    subseq.local KTGT, blossum62, firstonly=True, gapcost=12.5, chains=A B
 
 SEE ALSO
     subseq, subseq.global
@@ -218,14 +217,14 @@ SUBSEQ                          2018-06-01
                 .format(target))
 
 
-def subseq_global_alignment():
-    """UNDER DEVELOPMENT"""
-    pass
+def subseq_global_alignment(sele='{test}'):
+    print sele
 
 cmd.extend('subseq', subseq_re)
 cmd.extend('subseq.local', subseq_local_alignment)
 cmd.extend('subseq.global', subseq_global_alignment)
 stored.id = 0
+
 
 class CallCounter:
     """Decorator to determine number of calls for a method"""
@@ -245,18 +244,23 @@ def parse_targets(targets):
         logging.error("parameter 'targets' is not specified.")
         return
 
-    if os.path.isfile(targets):
-        with open(targets) as targets_file:
-            targets = targets_file.readlines()
+    targets_list = list()
 
-        targets = [ target.strip() for target in targets
-                        # Skip comments 
-                        if not target.startswith('#') 
-                  ] 
-    else:
-        targets = parse_str_to_list(targets)
+    for target in targets.split(" "):
 
-    return targets
+        if os.path.isfile(target):
+            with open(target) as fh:
+                f_targets = fh.readlines()
+
+            for target in f_targets:
+                target = target.strip()
+                if not target.startswith('#'):
+                    targets_list.append(target)
+
+        else:
+            targets_list.append(target)
+
+    return targets_list
 
 
 def parse_models(models):
@@ -265,7 +269,7 @@ def parse_models(models):
     if models.lower() == 'all':
         models = all_models
     else:
-        models = parse_str_to_list(models)
+        models = models.split(" ")
 
         for model in models:
             if model not in all_models:
@@ -289,7 +293,7 @@ def parse_chains(chains):
 
     else:        
 
-        chains = [ chain.upper() for chain in parse_str_to_list(chains) ]
+        chains = [ chain.upper() for chain in chains.split(" ") ]
 
         for chain in chains:
             if chain not in all_chains:
@@ -358,7 +362,7 @@ class Data:
                     ...
                 }
     """
-    
+
     # Dictionary to look up the one letter codes
     aa_one_letter = {
         'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
@@ -987,14 +991,3 @@ class SafeDict(dict):
     def __missing__(self, key):
         return key
 
-
-def parse_str_to_list(string):
-    """ Parse a string and return a list of values """
-
-    # split by any separator , . / etc. excluding all letters, numbers and _
-    raw_str = re.sub('([A-Za-z0-9_]+)', r'\1', string)
-
-    # remove symbols '[', ']', ''', '"', white space
-    raw_str = re.sub('[\[\]\'\"\s]', '', raw_str)
-
-    return raw_str.split(',')
