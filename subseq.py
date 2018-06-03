@@ -217,8 +217,9 @@ SUBSEQ                          2018-06-01
                 .format(target))
 
 
-def subseq_global_alignment(sele='{test}'):
-    print sele
+def subseq_global_alignment():
+    """UNDER DEVELOPMENT"""
+    pass
 
 cmd.extend('subseq', subseq_re)
 cmd.extend('subseq.local', subseq_local_alignment)
