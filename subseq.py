@@ -326,7 +326,6 @@ stored.id = 0
 
 class CallCounter:
     """Decorator to determine number of calls for a method"""
-
     def __init__(self, method):
         self.method = method
         self.counter = 0
@@ -337,6 +336,7 @@ class CallCounter:
 
 
 def parse_targets(targets):
+    """Parser for user input"""
     if targets is '':
         logging.error("parameter 'targets' is not specified.")
         return
@@ -361,6 +361,7 @@ def parse_targets(targets):
 
 
 def parse_models(models):
+    """Parser for user input"""
     all_models = cmd.get_names('objects')
 
     if models.lower() == 'all':
@@ -376,6 +377,7 @@ def parse_models(models):
 
 
 def parse_chains(chains):
+    """Parser for user input"""
     all_models = cmd.get_names('objects')
     all_chains = list()
 
@@ -399,6 +401,7 @@ def parse_chains(chains):
 
 
 def parse_search(search):
+    """Parser for user input"""
     if re.match(r'(?:aa|amino|aminoacid)s?', search, re.I):
         search = "aminoacids"
     elif re.match(r'(?:na|nucleic|nucleicacid)s?', search, re.I):
@@ -410,7 +413,7 @@ def parse_search(search):
 
 
 def parse_firstonly(firstonly):
-
+    """Parser for user input"""
     if re.match(r'(?:true|t|1)', firstonly, re.I):
         firstonly = True
     elif re.match(r'(?:false|f|0)', firstonly, re.I):
@@ -422,6 +425,7 @@ def parse_firstonly(firstonly):
 
 
 def parse_gapcost(gapcost):
+    """Parser for user input"""
     try:
         float(gapcost)
     except ValueError:
@@ -431,6 +435,7 @@ def parse_gapcost(gapcost):
 
 
 def parse_minscore(minscore):
+    """Parser for user input"""
     try:
         if float(minscore) > 100 or float(minscore) < 0:
             logging.error("minscore value is not in range of 0 and 100")
