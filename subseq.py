@@ -11,6 +11,19 @@ __credits__ = ["Justas Dapkūnas"]
 __version__ = "1.0.1"
 __status__ = "Development"
 
+#===================================
+# This is an executable script file
+#===================================
+#
+# To run this script file type in PyMOL console
+# run subseq.py
+#
+# Or configurate your pymolrc file
+# On Windows: Start > Run and then paste
+# notepad "%HOMEDRIVE%%HOMEPATH%\pymolrc.pml"
+#
+# On Unix/Linux-type system (including Mac OS X): Open a terminal and type
+# nano ~/.pymolrc
 
 def subseq_re(
         targets='', chains='all', search='aminoAcids', firstonly='False',
