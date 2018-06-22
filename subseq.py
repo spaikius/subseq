@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 import os
 import logging
@@ -20,13 +21,13 @@ DESCRIPTION
 
 USAGE
     subseq targets, [chains, [search, [firstonly, [models, [sele]]]]]
-    
+
 IMPORTANT
     All modified amino or nucleic acids are replaced with: X
 
     If quantifier {n,m} is used in Regular Expressions then target value should
     be within parentheses
-             
+
                     targets= (GT{3,}A{,4}(L|G){2,10})
                              ^~~~~~~~~~~~~~~~~~~~~~~^
 PARAMETERS
@@ -36,13 +37,13 @@ PARAMETERS
                                 - targets=(TATA.{3,5}ATG(.{3,4}){3,})
                                 - targets=SIS KATK (AK{3,4})
                                 - targets=PATH/TO/TARGETS_FILE
-    
-    chains=<list>           ; The list of chains 
-                              Examples: 
+
+    chains=<list>           ; The list of chains
+                              Examples:
                                 - chains=A
                                 - chains=A AT X Q
                               Default: all
-    
+
     search=<str>            ; Search for nucleic acids or amino acids sequence
                                 - for amino acids: aminoacids, amino, aa
                                 - for nucleic acids: nucleicacids, nucleic, na
@@ -73,7 +74,7 @@ SEE ALSO
 
 SUBSEQ                          2018-06-01
     """
-    
+
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     logging.error = CallCounter(logging.error)
 
@@ -84,14 +85,13 @@ SUBSEQ                          2018-06-01
     models = parse_models(models)
 
     if logging.error.counter is not 0:
-        logging.info("{0} errors were found. ".format(logging.error.counter) 
-            + "Please see above messages for more information")
+        logging.info("{0} errors were found. ".format(logging.error.counter) +
+                     "Please see above messages for more information")
 
         return
-        
 
     data = Data(models, chains, search, replace_with='X')
-    
+
     search_results = None
 
     for target in targets:
@@ -107,11 +107,11 @@ SUBSEQ                          2018-06-01
 
         else:
             logging.info("Nothing can be found for given target: {0}"
-                .format(target))
+                         .format(target))
 
 
 def subseq_local_alignment(
-        targets='', submatrix='blossum62', chains='all', search='aminoacids', 
+        targets='', submatrix='blossum62', chains='all', search='aminoacids',
         firstonly='False', gapcost='10.', minscore='51.', models='all',
         sele='ss-{method}-{id}-{target}'):
     """
@@ -131,16 +131,16 @@ PARAMETERS
                                 - targets=KTGTAVU
                                 - targets=SIS KATK AK
                                 - targets=PATH/TO/TARGETS_FILE
-    
+
     submatrix=<FILE>        ; Path to substitution matrix file
                               Default: blossum62
 
-    chains=<list>           ; The list of chains 
-                              Examples: 
+    chains=<list>           ; The list of chains
+                              Examples:
                                 - chains=A
                                 - chains=A AT X Q
                               Default: all
-    
+
     search=<str>            ; Search for nucleic acids or amino acids sequence
                                 - for amino acids: aminoAcids, amino, aa
                                 - for nucleic acids: nucleicAcids, nucleic, na
@@ -156,7 +156,7 @@ PARAMETERS
     minscore=<float>        ; The minimum score in precentages for throwing off
                               low score alignments in alignment search
                               Example: minscore=75.25
-                              Default value: 51.00 ( 51% ) 
+                              Default value: 51.00 ( 51% )
 
     models=<list>           ; The list of models
                               Examples:
@@ -191,11 +191,11 @@ SUBSEQ                          2018-06-01
     models = parse_models(models)
 
     if logging.error.counter is not 0:
-        logging.info("{0} errors were found. ".format(logging.error.counter) 
-            + "Please see above messages for more information")
+        logging.info("{0} errors were found. ".format(logging.error.counter) +
+                     "Please see above messages for more information")
 
         return
-    
+
     if search is 'nucleicacids' and submatrix is 'blossum62':
         submatrix = 'nucleicmatrix'
 
@@ -203,8 +203,8 @@ SUBSEQ                          2018-06-01
 
     for target in targets:
         try:
-            search_results = subseq_la_search(target, data, submatrix, 
-                                          gapcost, minscore, firstonly)
+            search_results = subseq_la_search(target, data, submatrix,
+                                              gapcost, minscore, firstonly)
         except Exception as e:
             logging.error("{0}".format(e))
             continue
@@ -214,12 +214,109 @@ SUBSEQ                          2018-06-01
 
         else:
             logging.info("Nothing can be found for given target: {0}"
-                .format(target))
+                         .format(target))
 
 
-def subseq_global_alignment():
-    """UNDER DEVELOPMENT"""
-    pass
+def subseq_global_alignment(
+        targets='', submatrix='blossum62', chains='all', search='aminoacids',
+        firstonly='False', gapcost='10.', minscore='51.', models='all',
+        sele='ss-{method}-{id}-{target}'):
+    """
+DESCRIPTION
+    subseq.global - tool for searching target sequences using global alignment
+
+USAGE
+    subseq.global targets, [submatrix, [chains, [search, [firstonly, [gapcost,
+                 [models, [sele]]]]]]]
+
+IMPORTANT
+    All modified amino or nucleic acids are replaced with: X
+
+PARAMETERS
+    targets=<list|FILE>     ; Target sequence
+                              Examples:
+                                - targets=KTGTAVU
+                                - targets=SIS KATK AK
+                                - targets=PATH/TO/TARGETS_FILE
+
+    submatrix=<FILE>        ; Path to substitution matrix file
+                              Default: blossum62
+
+    chains=<list>           ; The list of chains
+                              Examples:
+                                - chains=A
+                                - chains=A AT X Q
+                              Default: all
+
+    search=<str>            ; Search for nucleic acids or amino acids sequence
+                                - for amino acids: aminoAcids, amino, aa
+                                - for nucleic acids: nucleicAcids, nucleic, na
+                              Default value: aminoAcids
+
+    firstonly=<bool>        ; If firstonly is False (0) then select all matches
+                              If firstonly is True  (1) then select first match
+                              Default: False
+
+    gapcost=<float>         ; The linear gap cost for global alignment
+                              Default value: 10.00
+
+    models=<list>           ; The list of models
+                              Examples:
+                                - models=5ara
+                                - models=[5ara, 2cif, a4s2]
+                              Default: all
+
+    sele=<str>              ; Selection name
+                              Tokens:
+                                - {method} - used method for sequence search
+                                - {target} - first 10 alpha-numeric symbols
+                                - {id}     - id
+                              Default: 'ss-{method}-{id}-{target}'
+
+EXAMPLE
+    subseq.global KTGT, blossum62, firstonly=True, gapcost=12.5, chains=A B
+
+SEE ALSO
+    subseq, subseq.local
+
+SUBSEQ                          2018-06-01
+    """
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+    logging.error = CallCounter(logging.error)
+
+    targets = parse_targets(targets)
+    chains = parse_chains(chains)
+    search = parse_search(search)
+    firstonly = parse_firstonly(firstonly)
+    gapcost = parse_gapcost(gapcost)
+    minscore = parse_minscore(minscore)
+    models = parse_models(models)
+
+    if logging.error.counter is not 0:
+        logging.info("{0} errors were found. ".format(logging.error.counter) +
+                     "Please see above messages for more information")
+
+        return
+
+    if search is 'nucleicacids' and submatrix is 'blossum62':
+        submatrix = 'nucleicmatrix'
+
+    data = Data(models, chains, search, replace_with='X')
+
+    for target in targets:
+        try:
+            search_results = subseq_ga_search(target, data, submatrix,
+                                              gapcost, minscore, firstonly)
+        except Exception as e:
+            logging.error("{0}".format(e))
+            continue
+
+        if search_results is not None:
+            select(search_results, target, sele, method='global')
+
+        else:
+            logging.info("Nothing can be found for given target: {0}"
+                         .format(target))
 
 cmd.extend('subseq', subseq_re)
 cmd.extend('subseq.local', subseq_local_alignment)
@@ -240,7 +337,6 @@ class CallCounter:
 
 
 def parse_targets(targets):
-   
     if targets is '':
         logging.error("parameter 'targets' is not specified.")
         return
@@ -256,10 +352,10 @@ def parse_targets(targets):
             for target in f_targets:
                 target = target.strip()
                 if not target.startswith('#'):
-                    targets_list.append(target)
+                    targets_list.append(target.upper())
 
         else:
-            targets_list.append(target)
+            targets_list.append(target.upper())
 
     return targets_list
 
@@ -280,7 +376,6 @@ def parse_models(models):
 
 
 def parse_chains(chains):
-    
     all_models = cmd.get_names('objects')
     all_chains = list()
 
@@ -292,9 +387,9 @@ def parse_chains(chains):
     if chains.lower() == 'all':
         chains = all_chains
 
-    else:        
+    else:
 
-        chains = [ chain.upper() for chain in chains.split(" ") ]
+        chains = [chain.upper() for chain in chains.split(" ")]
 
         for chain in chains:
             if chain not in all_chains:
@@ -304,7 +399,6 @@ def parse_chains(chains):
 
 
 def parse_search(search):
-    
     if re.match(r'(?:aa|amino|aminoacid)s?', search, re.I):
         search = "aminoacids"
     elif re.match(r'(?:na|nucleic|nucleicacid)s?', search, re.I):
@@ -322,7 +416,7 @@ def parse_firstonly(firstonly):
     elif re.match(r'(?:false|f|0)', firstonly, re.I):
         firstonly = False
     else:
-        logging.error("parameter 'firstonly' is not a valid boolean value")        
+        logging.error("parameter 'firstonly' is not a valid boolean value")
 
     return firstonly
 
@@ -385,7 +479,7 @@ class Data:
         self.replace_with = replace_with
 
         self.construct_data_dict()
-        self.fill_empty_data_dict()
+        self.fill_data_dict()
 
     def __getitem__(self, key):
         if isinstance(key, tuple):
@@ -425,7 +519,7 @@ class Data:
 
         self.data = data_dict
 
-    def fill_empty_data_dict(self):
+    def fill_data_dict(self):
         atoms_dict = self.get_data_from_pymol()
 
         if self.search_for == 'aminoacids':
@@ -434,7 +528,7 @@ class Data:
             self.replace_to_na_one_letter(atoms_dict)
 
         self.fill_data(atoms_dict)
-        # self.filter_data()
+        self.filter_data()
 
     def get_data_from_pymol(self):
         """
@@ -494,6 +588,16 @@ class Data:
             self.data[model][chain]['sequence'] += resn
             self.data[model][chain]['ids'].append(resi)
 
+    def filter_data(self):
+        for model in self.data.keys():
+            for chain in self.data[model].keys():
+                if self.data[model][chain]['sequence'] == '':
+                    self.data[model].pop(chain)
+
+        for model in self.data.keys():
+            if len(self.data[model].keys()) == 0:
+                self.data.pop(model)
+
 
 def subseq_re_search(target, data, first_only, search_for):
     """
@@ -550,14 +654,12 @@ def subseq_re_search(target, data, first_only, search_for):
 
 
 def subseq_la_search(target, data, matrix, gap_cost, min_score, first_only):
-    """
-    """
     # Substitution matrix
     sub_matrix = SubMatrix(matrix)
-    
+
     # The maximum score for given target
     max_score = calculate_max_score(target, sub_matrix)
-    
+
     match_list = list()
 
     for model in data.keys():
@@ -575,7 +677,7 @@ def subseq_la_search(target, data, matrix, gap_cost, min_score, first_only):
                     sw.get_traceback(i, j)
 
                 start_pos = start_j - 1
-                
+
                 for _ in range(0, len(aligned_sequence.replace('-', ''))):
                     resi = data[model][chain]['ids'][start_pos]
                     match_list.append((model, chain, resi))
@@ -596,6 +698,56 @@ def subseq_la_search(target, data, matrix, gap_cost, min_score, first_only):
             else:
                 continue
             break
+
+    return match_list if len(match_list) != 0 else None
+
+
+def subseq_ga_search(target, data, matrix, gap_cost, min_score, first_only):
+    '''Global alignment search'''
+    # Substitution matrix
+    sub_matrix = SubMatrix(matrix)
+
+    # The maximum score for given target
+    max_score = calculate_max_score(target, sub_matrix)
+
+    match_list = list()
+
+    for model in data.keys():
+        for chain in data[model].keys():
+            sequence = data[model][chain]['sequence']
+
+            nw = NeedlemanWunsch(target, sequence, gap_cost, sub_matrix)
+
+            aligned_target, aligned_sequence, start_i, start_j =\
+                nw.get_traceback()
+
+            # Remove tailing gaps '-' from aligned target
+            while aligned_target[-1] is '-':
+                aligned_target = aligned_target[:-1]
+                aligned_sequence = aligned_sequence[:-1]
+
+            start_pos = start_j
+
+            for _ in range(0, len(aligned_sequence.replace('-', ''))):
+                resi = data[model][chain]['ids'][start_pos]
+                match_list.append((model, chain, resi))
+                start_pos += 1
+
+            alignment_string, identities, gaps, mismatches = \
+                create_alignment_string(aligned_target, aligned_sequence)
+
+            print_alignment(
+                model, chain, target, sequence, sub_matrix.get_name(),
+                gap_cost, nw.get_alignment_score(), max_score, identities,
+                mismatches, gaps, aligned_target, aligned_sequence,
+                alignment_string, start_i, start_j + 1,
+                data[model][chain]['ids'])
+
+            if first_only:
+                break
+        else:
+            continue
+        break
 
     return match_list if len(match_list) != 0 else None
 
@@ -644,7 +796,7 @@ def print_alignment(
         model, chain, target, sequence, substitution_matrix_name, gap_cost,
         alignment_score, max_score, identities, mismatches, gaps,
         aligned_target, aligned_sequence, alignment_string,
-        target_start, subject_start, ids_list):
+        target_start_index, subject_start_index, ids_list):
     """Prints BLAST like alignment"""
 
     a_len = len(aligned_sequence)
@@ -657,8 +809,8 @@ def print_alignment(
     print("Gap cost: {0}".format(gap_cost))
     print("\n")
     print("Alignment score: {0}/{1} ({2:.1%})"
-          .format(alignment_score, max_score, 
-            float(alignment_score) / max_score))
+          .format(alignment_score, max_score,
+                  float(alignment_score) / max_score))
 
     print("Identities: {0}/{1} ({2:.1%})"
           .format(identities, a_len, float(identities) / a_len))
@@ -667,30 +819,30 @@ def print_alignment(
           .format(mismatches, a_len, float(mismatches) / a_len))
 
     print("Gaps:       {0}/{1} ({2:.1%})"
-          .format(gaps, a_len, gaps / a_len))
+          .format(gaps, a_len, float(gaps) / a_len))
 
     for i in range(0, a_len, 60):
         target_slice = aligned_target[i: i + 60]
         subject_slice = aligned_sequence[i: i + 60]
         alignment_slice = alignment_string[i: i + 60]
 
-        target_start = i + target_start
-        subject_start = i + int(ids_list[subject_start - 1])
+        target_start = i + target_start_index
+        subject_start = i + int(ids_list[subject_start_index - 1])
 
         target_end = len([i for i in target_slice if i != '-']) \
-                     + target_start - 1
-        
+            + target_start - 1
+
         subject_end = len([i for i in subject_slice if i != '-']) \
-                     + subject_start - 1
+            + subject_start - 1
 
         print("Target  {0:<4} {1} {2}"
-            .format(target_start, target_slice, target_end))
-        
+              .format(target_start, target_slice, target_end))
+
         print(' ' * 13 + "{0}".format(alignment_slice))
-        
-        print("Subject {0:<4} {1} {2}"
-            .format(subject_start, subject_slice, subject_end))
-        
+
+        print("{0}/{1:<2} {2:<4} {3} {4}"
+              .format(model, chain, subject_start, subject_slice, subject_end))
+
         print("\n")
 
     print('-' * 60)
@@ -703,8 +855,8 @@ class SmithWaterman:
     """
 
     def __init__(self, target, sequence, gap_cost, sub_matrix):
-        self.target = [i for i in target]
-        self.sequence = [i for i in sequence]
+        self.target = target
+        self.sequence = sequence
         self.gap_cost = float(gap_cost)
         self.sub_matrix = sub_matrix
 
@@ -722,8 +874,8 @@ class SmithWaterman:
           E  [0, 0, 0, 0, 0, 0, 0, 0, 0],
           T  [0, 0, 0, 0, 0, 0, 0, 0, 0]]
         '''
-        self.score_matrix = [[0 for _ in range(len(sequence) + 1)] \
-                                for _ in range(len(target) + 1)]
+        self.score_matrix = [[0 for _ in range(len(sequence) + 1)]
+                             for _ in range(len(target) + 1)]
 
         self.fill_score_matrix()
 
@@ -740,7 +892,7 @@ class SmithWaterman:
             return self.score_matrix[key]
 
     def get_coordinates(self):
-        """Retruns a list of tuples (i, j) 
+        """Retruns a list of tuples (i, j)
         where i and j are coordinates of the best score
         """
         return self.best_score_coordinates
@@ -848,6 +1000,127 @@ class SmithWaterman:
         return max(0, diagonal_score, up_score, left_score)
 
 
+class NeedlemanWunsch:
+    """
+    This class performs nucleotide or protein sequence alignment using
+    the Needleman–Wunsch algorithm
+    """
+    def __init__(self, target, sequence, gap_cost, sub_matrix):
+        self.target = target
+        self.sequence = sequence
+        self.gap_cost = float(gap_cost)
+        self.sub_matrix = sub_matrix
+        self.score_matrix = [[0 for _ in range(len(sequence) + 1)]
+                             for _ in range(len(target) + 1)]
+        self.init_score_matrix()
+        self.fill_score_matrix()
+
+    def init_score_matrix(self):
+        """Initialization of scoring matrix"""
+        for i in range(len(self.target) + 1):
+            self.score_matrix[i][0] = -self.gap_cost * i
+        for j in range(len(self.sequence) + 1):
+            self.score_matrix[0][j] = -self.gap_cost * j
+
+    def fill_score_matrix(self):
+        """Fills core matrix with scores representing trial alignments
+        of the two sequences
+        """
+        for i in range(1, len(self.score_matrix)):
+            for j in range(1, len(self.score_matrix[i])):
+                score = self.calculate_score(i, j)
+
+                self.score_matrix[i][j] = score
+
+    def calculate_score(self, i, j):
+        """Calculates score for given i and j position in the score matrix
+        The score is based on the upper-left, left and up elements
+        """
+        aa1 = self.target[i - 1]
+        aa2 = self.sequence[j - 1]
+
+        similarity = float(self.sub_matrix[aa1, aa2])
+
+        diagonal_score = self.score_matrix[i - 1][j - 1] + similarity
+        up_score = self.score_matrix[i - 1][j] - self.gap_cost
+        left_score = self.score_matrix[i][j - 1] - self.gap_cost
+
+        return max(diagonal_score, up_score, left_score)
+
+    def get_traceback(self):
+        """Finds the optimal path through the score matrix.
+        Returns constructed alignment strings for target and subject and
+        values of i, j where alignment begins
+        """
+        aligned_target = list()
+        aligned_subject = list()
+
+        end, diagonal, up, left = range(4)
+
+        i, j = len(self.target), len(self.sequence)
+
+        move = self.next_move(i, j)
+
+        while move != end:
+            if move == diagonal:
+                aligned_target.append(self.target[i - 1])
+                aligned_subject.append(self.sequence[j - 1])
+
+                i -= 1
+                j -= 1
+
+            elif move == up:
+                aligned_target.append(self.target[i - 1])
+                aligned_subject.append('-')
+
+                i -= 1
+
+            elif move == left:
+                aligned_target.append('-')
+                aligned_subject.append(self.sequence[j - 1])
+
+                j -= 1
+
+            move = self.next_move(i, j)
+
+        aligned_target = ''.join(reversed(aligned_target))
+        aligned_subject = ''.join(reversed(aligned_subject))
+
+        return aligned_target, aligned_subject, i, j
+
+    def next_move(self, i, j):
+        """Looks for the next move during traceback.
+        Moves are determined by the score of three upper-left, left and up
+        in the score matrix
+        """
+        aa1 = self.target[i - 1]
+        aa2 = self.sequence[j - 1]
+        achieved_score = self.score_matrix[i][j]
+        diagonal = self.score_matrix[i - 1][j - 1]
+        up = self.score_matrix[i - 1][j]
+        left = self.score_matrix[i][j - 1]
+
+        if i == 0 or j == 0:
+            # return END
+            return 0
+
+        if achieved_score == diagonal + int(self.sub_matrix[aa1, aa2]):
+            # return diagonal move
+            return 1
+
+        if achieved_score == up - self.gap_cost:
+            # return up move
+            return 2
+
+        if achieved_score == left - self.gap_cost:
+            # return left move
+            return 3
+
+    def get_alignment_score(self):
+        """Returns aligment score"""
+        return self.score_matrix[-1][-1]
+
+
 class SubMatrix:
     """
 
@@ -871,7 +1144,7 @@ class SubMatrix:
 
         lines = matrix.strip().split('\n')
         # remove comments
-        lines = [line for line in lines if not line.startswith('#') ]
+        lines = [line for line in lines if not line.startswith('#')]
 
         header = lines.pop(0)
         columns = header.split()
@@ -914,30 +1187,30 @@ class SubMatrix:
         if matrix_name == 'blossum62':
             return '''
    A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X  *
-A  4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4 
-R -1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4 
-N -2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4 
-D -2 -2  1  6 -3  0  2 -1 -1 -3 -4 -1 -3 -3 -1  0 -1 -4 -3 -3  4  1 -1 -4 
-C  0 -3 -3 -3  9 -3 -4 -3 -3 -1 -1 -3 -1 -2 -3 -1 -1 -2 -2 -1 -3 -3 -2 -4 
-Q -1  1  0  0 -3  5  2 -2  0 -3 -2  1  0 -3 -1  0 -1 -2 -1 -2  0  3 -1 -4 
-E -1  0  0  2 -4  2  5 -2  0 -3 -3  1 -2 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4 
-G  0 -2  0 -1 -3 -2 -2  6 -2 -4 -4 -2 -3 -3 -2  0 -2 -2 -3 -3 -1 -2 -1 -4 
-H -2  0  1 -1 -3  0  0 -2  8 -3 -3 -1 -2 -1 -2 -1 -2 -2  2 -3  0  0 -1 -4 
-I -1 -3 -3 -3 -1 -3 -3 -4 -3  4  2 -3  1  0 -3 -2 -1 -3 -1  3 -3 -3 -1 -4 
-L -1 -2 -3 -4 -1 -2 -3 -4 -3  2  4 -2  2  0 -3 -2 -1 -2 -1  1 -4 -3 -1 -4 
-K -1  2  0 -1 -3  1  1 -2 -1 -3 -2  5 -1 -3 -1  0 -1 -3 -2 -2  0  1 -1 -4 
-M -1 -1 -2 -3 -1  0 -2 -3 -2  1  2 -1  5  0 -2 -1 -1 -1 -1  1 -3 -1 -1 -4 
-F -2 -3 -3 -3 -2 -3 -3 -3 -1  0  0 -3  0  6 -4 -2 -2  1  3 -1 -3 -3 -1 -4 
-P -1 -2 -2 -1 -3 -1 -1 -2 -2 -3 -3 -1 -2 -4  7 -1 -1 -4 -3 -2 -2 -1 -2 -4 
-S  1 -1  1  0 -1  0  0  0 -1 -2 -2  0 -1 -2 -1  4  1 -3 -2 -2  0  0  0 -4 
-T  0 -1  0 -1 -1 -1 -1 -2 -2 -1 -1 -1 -1 -2 -1  1  5 -2 -2  0 -1 -1  0 -4 
-W -3 -3 -4 -4 -2 -2 -3 -2 -2 -3 -2 -3 -1  1 -4 -3 -2 11  2 -3 -4 -3 -2 -4 
-Y -2 -2 -2 -3 -2 -1 -2 -3  2 -1 -1 -2 -1  3 -3 -2 -2  2  7 -1 -3 -2 -1 -4 
-V  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4 -3 -2 -1 -4 
-B -2 -1  3  4 -3  0  1 -1  0 -3 -4  0 -3 -3 -2  0 -1 -4 -3 -3  4  1 -1 -4 
-Z -1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4 
-X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4 
-* -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1 
+A  4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4
+R -1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4
+N -2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4
+D -2 -2  1  6 -3  0  2 -1 -1 -3 -4 -1 -3 -3 -1  0 -1 -4 -3 -3  4  1 -1 -4
+C  0 -3 -3 -3  9 -3 -4 -3 -3 -1 -1 -3 -1 -2 -3 -1 -1 -2 -2 -1 -3 -3 -2 -4
+Q -1  1  0  0 -3  5  2 -2  0 -3 -2  1  0 -3 -1  0 -1 -2 -1 -2  0  3 -1 -4
+E -1  0  0  2 -4  2  5 -2  0 -3 -3  1 -2 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
+G  0 -2  0 -1 -3 -2 -2  6 -2 -4 -4 -2 -3 -3 -2  0 -2 -2 -3 -3 -1 -2 -1 -4
+H -2  0  1 -1 -3  0  0 -2  8 -3 -3 -1 -2 -1 -2 -1 -2 -2  2 -3  0  0 -1 -4
+I -1 -3 -3 -3 -1 -3 -3 -4 -3  4  2 -3  1  0 -3 -2 -1 -3 -1  3 -3 -3 -1 -4
+L -1 -2 -3 -4 -1 -2 -3 -4 -3  2  4 -2  2  0 -3 -2 -1 -2 -1  1 -4 -3 -1 -4
+K -1  2  0 -1 -3  1  1 -2 -1 -3 -2  5 -1 -3 -1  0 -1 -3 -2 -2  0  1 -1 -4
+M -1 -1 -2 -3 -1  0 -2 -3 -2  1  2 -1  5  0 -2 -1 -1 -1 -1  1 -3 -1 -1 -4
+F -2 -3 -3 -3 -2 -3 -3 -3 -1  0  0 -3  0  6 -4 -2 -2  1  3 -1 -3 -3 -1 -4
+P -1 -2 -2 -1 -3 -1 -1 -2 -2 -3 -3 -1 -2 -4  7 -1 -1 -4 -3 -2 -2 -1 -2 -4
+S  1 -1  1  0 -1  0  0  0 -1 -2 -2  0 -1 -2 -1  4  1 -3 -2 -2  0  0  0 -4
+T  0 -1  0 -1 -1 -1 -1 -2 -2 -1 -1 -1 -1 -2 -1  1  5 -2 -2  0 -1 -1  0 -4
+W -3 -3 -4 -4 -2 -2 -3 -2 -2 -3 -2 -3 -1  1 -4 -3 -2 11  2 -3 -4 -3 -2 -4
+Y -2 -2 -2 -3 -2 -1 -2 -3  2 -1 -1 -2 -1  3 -3 -2 -2  2  7 -1 -3 -2 -1 -4
+V  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4 -3 -2 -1 -4
+B -2 -1  3  4 -3  0  1 -1  0 -3 -4  0 -3 -3 -2  0 -1 -4 -3 -3  4  1 -1 -4
+Z -1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
+X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
+* -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1
             '''
 
         if matrix_name == 'nucleicmatrix':
@@ -954,17 +1227,17 @@ X -1 -1 -1 -1 -1  1
         return None
 
 
-
 def select(select_list, target, sele, method):
     """Creates pymol selection object"""
 
-
-    select_name = string.Formatter().vformat(sele, (), 
+    select_name = string.Formatter().vformat(
+        sele,
+        (),
         SafeDict(
             method=method,
             target=re.sub(r'[^\w]', '', target)[:10],
             id=new_id(sele)))
-    
+
     # empty select
     cmd.select(select_name, None)
 
@@ -984,11 +1257,10 @@ def new_id(sele):
     """Returns an incremented id if id token is requested"""
     if re.search(r'{id}', sele):
         stored.id += 1
-    
+
     return stored.id
 
 
 class SafeDict(dict):
     def __missing__(self, key):
         return key
-
