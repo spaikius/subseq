@@ -318,7 +318,7 @@ SUBSEQ                          2018-06-01
     for target in targets:
         try:
             search_results = subseq_ga_search(target, data, submatrix,
-                                              gapcost, minscore, firstonly)
+                                              gapcost, firstonly)
         except Exception as e:
             logging.error("{0}".format(e))
             continue
@@ -719,7 +719,7 @@ def subseq_la_search(target, data, matrix, gap_cost, min_score, first_only):
     return match_list if len(match_list) != 0 else None
 
 
-def subseq_ga_search(target, data, matrix, gap_cost, min_score, first_only):
+def subseq_ga_search(target, data, matrix, gap_cost, first_only):
     '''Global alignment search'''
     # Substitution matrix
     sub_matrix = SubMatrix(matrix)
