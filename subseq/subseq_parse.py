@@ -96,19 +96,20 @@ def parse_firstonly(firstonly):
 def parse_gapcost(gapcost):
     """Parser for user input"""
     try:
-        float(gapcost)
+        gapcost = float(gapcost)
     except ValueError:
-        logging.error("parameter 'gapcost' is not a valid flaot value")
+        logging.error("parameter 'gapcost' is not a valid float value")
 
-    return float(gapcost)
+    return gapcost
 
 
 def parse_minscore(minscore):
     """Parser for user input"""
     try:
-        if float(minscore) > 100 or float(minscore) < 0:
+        minscore = float(minscore)
+        if minscore > 100 or minscore < 0:
             logging.error("minscore value is not in range of 0 and 100")
     except ValueError:
-        logging.error("parameter 'minscore' is not a valid int value")
+        logging.error("parameter 'minscore' is not a valid float value")
 
-    return float(minscore)
+    return minscore
