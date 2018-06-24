@@ -26,7 +26,7 @@ __status__ = "Development"
 # nano ~/.pymolrc
 
 def subseq_re(
-        targets='', chains='all', search='aminoAcids', firstonly='False',
+        targets, chains='all', search='aminoAcids', firstonly='False',
         models='all', sele='ss-{method}-{id}-{target}'):
     """
 DESCRIPTION
@@ -124,7 +124,7 @@ SUBSEQ                          2018-06-01
 
 
 def subseq_local_alignment(
-        targets='', submatrix='blossum62', chains='all', search='aminoacids',
+        targets, submatrix='blossum62', chains='all', search='aminoacids',
         firstonly='False', gapcost='10.', minscore='51.', models='all',
         sele='ss-{method}-{id}-{target}'):
     """
@@ -231,8 +231,8 @@ SUBSEQ                          2018-06-01
 
 
 def subseq_global_alignment(
-        targets='', submatrix='blossum62', chains='all', search='aminoacids',
-        firstonly='False', gapcost='10.', minscore='51.', models='all',
+        targets, submatrix='blossum62', chains='all', search='aminoacids',
+        firstonly='False', gapcost='10.', models='all',
         sele='ss-{method}-{id}-{target}'):
     """
 DESCRIPTION
@@ -350,7 +350,7 @@ class CallCounter:
 
 def parse_targets(targets):
     """Parser for user input"""
-    if targets is '':
+    if targets is None:
         logging.error("parameter 'targets' is not specified.")
         return
 
