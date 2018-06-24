@@ -302,7 +302,6 @@ SUBSEQ                          2018-06-01
     search = parse_search(search)
     firstonly = parse_firstonly(firstonly)
     gapcost = parse_gapcost(gapcost)
-    minscore = parse_minscore(minscore)
     models = parse_models(models)
 
     if logging.error.counter is not 0:

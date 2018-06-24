@@ -81,7 +81,6 @@ SUBSEQ                          2018-06-01
     search = subseq_parse.parse_search(search)
     firstonly = subseq_parse.parse_firstonly(firstonly)
     gapcost = subseq_parse.parse_gapcost(gapcost)
-    minscore = subseq_parse.parse_minscore(minscore)
     models = subseq_parse.parse_models(models)
 
     if logging.error.counter is not 0:
