@@ -3,15 +3,16 @@ import os
 
 from pymol import cmd
 
+# Append path
+sys.path.append(os.path.dirname(__file__))
+
+# Module files
+import subseq_re
+import subseq_local_alignment
+import subseq_global_alignment
 
 def __init__(self):
-    # Append path
-    sys.path.append(os.path.dirname(__file__))
-    
-    # Module files
-    import subseq_re
-    import subseq_local_alignment
-    import subseq_global_alignment
+    pass
 
 
 def subseq_re_dialog(app):
