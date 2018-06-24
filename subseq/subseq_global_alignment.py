@@ -19,7 +19,7 @@ DESCRIPTION
 
 USAGE
     subseq.global targets, [submatrix, [chains, [search, [firstonly, [gapcost,
-                 [models, [sele]]]]]]]
+                  [minscore, [models, [sele]]]]]]]
 
 IMPORTANT
     All modified amino or nucleic acids are replaced with: X
@@ -52,6 +52,11 @@ PARAMETERS
     gapcost=<float>         ; The linear gap cost for global alignment
                               Default value: 10.00
 
+    minscore=<float>        ; The minimum score in precentages for throwing off
+                              low score alignments in alignment search
+                              Example: minscore=75.25
+                              Default value: 51.00 ( 51% )
+
     models=<list>           ; The list of models
                               Examples:
                                 - models=5ara
@@ -81,6 +86,7 @@ SUBSEQ                          2018-06-01
     search = subseq_parse.parse_search(search)
     firstonly = subseq_parse.parse_firstonly(firstonly)
     gapcost = subseq_parse.parse_gapcost(gapcost)
+    minscore = subseq_parse.parse_minscore(minscore)
     models = subseq_parse.parse_models(models)
 
     if logging.error.counter is not 0:
@@ -97,7 +103,7 @@ SUBSEQ                          2018-06-01
     for target in targets:
         try:
             search_results = subseq_ga_search(target, data, submatrix,
-                                              gapcost, firstonly)
+                                              gapcost, minscore, firstonly)
         except Exception as e:
             logging.error("{0}".format(e))
             continue
@@ -110,7 +116,7 @@ SUBSEQ                          2018-06-01
                          .format(target))
 
 
-def subseq_ga_search(target, data, matrix, gap_cost, first_only):
+def subseq_ga_search(target, data, matrix, gap_cost, min_score, first_only):
     '''Global alignment search'''
     # Substitution matrix
     sub_matrix = SubMatrix.SubMatrix(matrix)
@@ -125,6 +131,10 @@ def subseq_ga_search(target, data, matrix, gap_cost, first_only):
             sequence = data[model][chain]['sequence']
 
             nw = NeedlemanWunch.NeedlemanWunsch(target, sequence, gap_cost, sub_matrix)
+            alignment_score = nw.get_alignment_score()
+
+            if (float(alignment_score) / max_score) * 100 < min_score:
+                continue
 
             aligned_target, aligned_sequence, start_i, start_j =\
                 nw.get_traceback()
