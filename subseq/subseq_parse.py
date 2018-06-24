@@ -6,7 +6,7 @@ from pymol import cmd
 
 def parse_targets(targets):
     """Parser for user input"""
-    if targets is '':
+    if targets is None:
         logging.error("parameter 'targets' is not specified.")
         return
 

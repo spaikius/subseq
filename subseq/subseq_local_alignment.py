@@ -10,7 +10,7 @@ import Data
 
 
 def subseq_local_alignment(
-        targets='', submatrix='blossum62', chains='all', search='aminoacids',
+        targets, submatrix='blossum62', chains='all', search='aminoacids',
         firstonly='False', gapcost='10.', minscore='51.', models='all',
         sele='ss-{method}-{id}-{target}'):
     """

@@ -7,7 +7,7 @@ import CallCounter
 import Data
 
 def subseq_re(
-        targets='', chains='all', search='aminoAcids', firstonly='False',
+        targets, chains='all', search='aminoAcids', firstonly='False',
         models='all', sele='ss-{method}-{id}-{target}'):
     """
 DESCRIPTION
