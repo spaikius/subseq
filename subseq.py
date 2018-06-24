@@ -743,7 +743,7 @@ def subseq_ga_search(target, data, matrix, gap_cost, min_score, first_only):
             nw = NeedlemanWunsch(target, sequence, gap_cost, sub_matrix)
             alignment_score = nw.get_alignment_score()
 
-            if (float(alignment_score) / max_score) * 100 < min_score:
+            if max(float(alignment_score) / max_score * 100, 0) < min_score:
                 continue
 
             aligned_target, aligned_sequence, start_i, start_j =\
